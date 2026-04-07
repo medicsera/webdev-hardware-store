@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: webdev-hardware-store
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+  # Настройка H2 базы данных
+  datasource:
+    url: jdbc:h2:mem:hardware_store  # База в памяти
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # Настройка JPA / Hibernate
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop  # Таблицы создаются автоматически при старте и удаляются при остановке
+    show-sql: true           # Показывать SQL запросы в консоли
+
+  # Настройка консоли H2 (для просмотра данных в браузере)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # Отключаем Flyway для режима "заглушки", чтобы избежать ошибок миграции
+  flyway:
+    enabled: false
+
+# Настройки сервера
+server:
+  port: 8080
+
+# Логирование
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: DEBUG # Чтобы видеть запросы к БД
