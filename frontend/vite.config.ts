@@ -8,7 +8,10 @@ export default defineConfig({
   css:{
     preprocessorOptions: {
       scss: {
-        additionalData: `@import "@/assets/scss/variables.scss";`
+        additionalData: `
+        @use "@/scss/variables.scss";
+        @use "@/scss/mixins.scss"
+        `
       }
     }
   },
@@ -22,8 +25,13 @@ export default defineConfig({
     emptyOutDir: true
   },
     server: {
+      port: 5173,
       proxy: {
-          '/api': 'http://localhost:8080'
+          '/api': {
+              target: 'http://localhost:8080',
+              changeOrigin: true,
+              secure: false
+          }
       }
     }
 
