@@ -96,22 +96,26 @@ const decrement = () => {
       'product-card--out-of-stock': !isInStock
     }"
   >
-    <div class="product-image">
-      <img
-          :src="imageUrl"
-          :alt="productName"
-          class="product-image__img"
-          loading="lazy"
-      />
-      <div v-if="!isInStock" class="product-image__overlay">
-        <span class="out-of-stock">Нет в наличии</span>
+    <router-link :to="`/product/${product.id}`" class="product-image-link">
+      <div class="product-image">
+        <img
+            :src="imageUrl"
+            :alt="productName"
+            class="product-image__img"
+            loading="lazy"
+        />
+        <div v-if="!isInStock" class="product-image__overlay">
+          <span class="out-of-stock">Нет в наличии</span>
+        </div>
       </div>
-    </div>
+    </router-link>
 
     <div class="product-info">
-      <h3 class="product-info__title">
-        {{ productName }}
-      </h3>
+      <router-link :to="`/product/${product.id}`" class="product-info__title-link">
+        <h3 class="product-info__title">
+          {{ productName }}
+        </h3>
+      </router-link>
 
       <div class="product-info__price">
         <span class="price">{{ formattedPrice }}</span>
@@ -178,6 +182,12 @@ const decrement = () => {
   }
 }
 
+.product-image-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .product-image {
   position: relative;
   width: 100%;
@@ -221,6 +231,16 @@ const decrement = () => {
   flex: 1;
   gap: 0.75rem;
 
+  &__title-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+
+    &:hover .product-info__title {
+      color: #f4b942;
+    }
+  }
+
   &__title {
     font-size: 1.125rem;
     font-weight: 600;
@@ -231,6 +251,7 @@ const decrement = () => {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    transition: color 0.2s;
   }
 
   &__price {
