@@ -7,6 +7,7 @@ export interface Product {
     category?: string
     inStock?: boolean
     quantity?: number
+    specifications?: Record<string, string>
 }
 
 export interface CartItem extends Product {
