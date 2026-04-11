@@ -2,6 +2,9 @@ import {createRouter, createWebHistory } from "vue-router";
 import type {RouteRecordRaw} from "vue-router";
 
 import HomeView from "@/views/HomeView.vue";
+import CatalogView from '@/views/CatalogView.vue';
+import ProductView from '@/views/ProductView.vue';
+import CartView from '@/views/CartView.vue';
 
 const routes: RouteRecordRaw[] = [
     {
@@ -9,6 +12,21 @@ const routes: RouteRecordRaw[] = [
         name: "home",
         component: () => HomeView,
         meta: {title: "Главная"}
+    },
+    {
+        path: '/catalog',
+        name: 'catalog',
+        component: () => CatalogView
+    },
+    {
+        path: '/product/:id',
+        name: 'product',
+        component: () => ProductView
+    },
+    {
+        path: '/cart',
+        name: 'cart',
+        component: () => CartView
     }
 ]
 
