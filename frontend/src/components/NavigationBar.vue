@@ -46,6 +46,11 @@
 <style lang="scss" scoped>
 .app-header{
   display: inline;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .container {
@@ -98,7 +103,7 @@
 
 }
 .contacts {
-  width: 150px;
+  width: 180px;
   height: 100%;
 
   &-div {
