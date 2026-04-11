@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import ProductCarousel from '@/components/ProductCarousel.vue'
 import NavigationBar from '@/components/NavigationBar.vue'
+import PopularCategories from '@/components/PopularCategories.vue'
 import { useProducts } from '@/composables/useProducts'
 
 const { products, loading, error, fetchProducts } = useProducts()
@@ -27,6 +28,7 @@ onMounted(() => {
         :products="products"
         :loading="loading"
     />
+    <PopularCategories />
   </div>
 </template>
 
