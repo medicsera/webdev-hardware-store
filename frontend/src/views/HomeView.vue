@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import ProductCarousel from '@/components/ProductCarousel.vue'
-import NavigationBar from '@/components/NavigationBar.vue'
 import PopularCategories from '@/components/PopularCategories.vue'
 import { useProducts } from '@/composables/useProducts'
 
@@ -15,7 +14,6 @@ onMounted(() => {
 <template>
   <div class="home-view">
     <img src="/banner.jpg" alt="Баннер" class="banner">
-    <NavigationBar />
 
     <div v-if="error" class="error-message">
       <p>{{ error }}</p>
@@ -36,12 +34,12 @@ onMounted(() => {
 .home-view {
   padding: 24px;
   background: #f5f5f5;
-  min-height: 100vh;
 
   .banner {
     width: 100%;
     margin-bottom: 24px;
     border-radius: 8px;
+    display: block;
   }
 
   .error-message {
