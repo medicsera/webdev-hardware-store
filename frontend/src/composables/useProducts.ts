@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { productService } from '@/services/api'
+import { productService } from '@/services/productApi'
 import type { Product, PaginatedResponse } from '@/types/product'
 
 /**
@@ -52,7 +52,6 @@ export function useProducts() {
     const totalPages = ref(0)
     const currentPage = ref(0)
 
-    // 👇 Mock-данные для разработки (когда бэкенд не запущен)
     const mockProducts: Product[] = [
         { id: 1, name: 'Дрель ударная Bosch', price: 5490, inStock: true },
         { id: 2, name: 'Набор отвёрток 12 шт', price: 890, inStock: true },
@@ -71,38 +70,30 @@ export function useProducts() {
         error.value = null
 
         try {
-            // 👇 Пытаемся сделать реальный запрос
             const response = await fetch(`${API_BASE_URL}/products?page=${page}&size=${size}`)
 
-            // Если бэкенд отвечает — используем реальные данные
             if (response.ok) {
                 const data: PaginatedResponse<Product> = await response.json()
                 products.value = data.content
                 totalPages.value = data.totalPages
                 currentPage.value = data.number
-                console.log('✅ Загружено с бэкенда:', products.value.length)
+                console.log('Загружено с бэкенда:', products.value.length)
                 return
             }
 
-            // Если 404 или ошибка — падаем в catch
             throw new Error('Backend not available')
 
         } catch (err) {
-            // 👇 FALLBACK: используем моки для разработки
-            console.warn('⚠️ Бэкенд недоступен, используем mock-данные')
+            console.warn('Бэкенд недоступен, используем mock-данные для products')
 
-            // Имитация задержки сети
             await new Promise(resolve => setTimeout(resolve, 500))
 
-            // Возвращаем нужную "страницу" из моков
             const start = page * size
             const end = start + size
             products.value = mockProducts.slice(start, end)
             totalPages.value = Math.ceil(mockProducts.length / size)
             currentPage.value = page
 
-            // Не устанавливаем error, чтобы UI не показывал ошибку
-            // (это нормальный режим разработки)
         } finally {
             loading.value = false
         }

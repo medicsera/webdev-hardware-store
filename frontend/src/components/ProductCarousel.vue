@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import ProductCard from './ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
 import type { Product } from '@/types/product'
@@ -18,14 +18,15 @@ const props = withDefaults(defineProps<Props>(), {
 
 const cartStore = useCartStore()
 const carouselRef = ref<HTMLElement | null>(null)
-const scrollPosition = ref(0) // 👈 Отслеживаем позицию скролла
+
+const forceUpdate = ref(0)
 
 const demoProducts: Product[] = Array.from({ length: 12 }, (_, i) => ({
   id: i + 1,
   name: `Товар ${i + 1}`,
   price: 100 * (i + 1),
   inStock: true,
-  image: `/images/placeholder-product.jpg`
+  image: `/public/placeholder-product.jpg`
 }))
 
 const productsToShow = computed(() => {
@@ -34,15 +35,17 @@ const productsToShow = computed(() => {
   return demoProducts
 })
 
-// 👇 Используем scrollPosition для реактивности
 const canScrollLeft = computed(() => {
-  return scrollPosition.value > 0
+  forceUpdate.value
+  const container = carouselRef.value
+  return container ? container.scrollLeft > 0 : false
 })
 
 const canScrollRight = computed(() => {
+  forceUpdate.value
   const container = carouselRef.value
   if (!container) return false
-  return scrollPosition.value < (container.scrollWidth - container.clientWidth - 10)
+  return container.scrollLeft < (container.scrollWidth - container.clientWidth - 10)
 })
 
 const scroll = (direction: 'left' | 'right') => {
@@ -58,40 +61,39 @@ const scroll = (direction: 'left' | 'right') => {
     left: targetScroll,
     behavior: 'smooth'
   })
+
+  setTimeout(() => {
+    forceUpdate.value++
+  }, 300)
 }
 
-const scrollLeft = () => {
-  if (canScrollLeft.value) scroll('left')
-}
-
-const scrollRight = () => {
-  if (canScrollRight.value) scroll('right')
-}
+const scrollLeft = () => { if (canScrollLeft.value) scroll('left') }
+const scrollRight = () => { if (canScrollRight.value) scroll('right') }
 
 const handleWheel = (e: WheelEvent) => {
   const container = carouselRef.value
   if (!container) return
 
-  e.preventDefault()
   container.scrollLeft += e.deltaY
+  forceUpdate.value++
 }
 
-// 👈 Обновляем scrollPosition при скролле
-const updateScrollPosition = () => {
-  const container = carouselRef.value
-  if (container) {
-    scrollPosition.value = container.scrollLeft
-  }
+const handleScroll = () => {
+  forceUpdate.value++
 }
 
 onMounted(() => {
   const container = carouselRef.value
   if (container) {
-    // Начальная позиция
-    updateScrollPosition()
+    container.addEventListener('scroll', handleScroll)
+    forceUpdate.value++
+  }
+})
 
-    // Слушаем скролл
-    container.addEventListener('scroll', updateScrollPosition)
+onUnmounted(() => {
+  const container = carouselRef.value
+  if (container) {
+    container.removeEventListener('scroll', handleScroll)
   }
 })
 
@@ -109,7 +111,7 @@ const handleAddToCart = (product: Product) => {
     <div
         ref="carouselRef"
         class="product-carousel__container"
-        @wheel.prevent="handleWheel"
+        @wheel="handleWheel"
     >
       <template v-if="productsToShow === null">
         <ProductCard
@@ -175,8 +177,8 @@ const handleAddToCart = (product: Product) => {
   }
 
   &__title {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
     color: #2c3e50;
     margin: 0;
   }
@@ -195,6 +197,7 @@ const handleAddToCart = (product: Product) => {
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
+    padding-bottom: 8px;
 
     scrollbar-width: none;
     -ms-overflow-style: none;

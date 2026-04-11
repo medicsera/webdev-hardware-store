@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Product } from '@/stores/product'
+import type { Product } from '@/types/product'
 
 interface Props {
   product?: Product
@@ -153,7 +153,7 @@ const decrement = () => {
 <style lang="scss" scoped>
 .product-card {
   width: 240px;
-  min-height: 400px;
+  min-height: 401px;
   height: 100%;
   background: white;
   border-radius: 12px;
