@@ -26,7 +26,7 @@ const demoProducts: Product[] = Array.from({ length: 12 }, (_, i) => ({
   name: `Товар ${i + 1}`,
   price: 100 * (i + 1),
   inStock: true,
-  image: `/public/placeholder-product.jpg`
+  image: `/placeholder-product.jpg`
 }))
 
 const productsToShow = computed(() => {
@@ -127,7 +127,7 @@ const handleAddToCart = (product: Product) => {
             :key="product.id"
             :product="product"
             :show-add-to-cart="true"
-            :show-quantity="false"
+            :show-quantity="true"
             @add-to-cart="handleAddToCart"
         />
       </template>

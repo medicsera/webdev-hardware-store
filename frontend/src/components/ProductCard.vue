@@ -129,7 +129,7 @@ const decrement = () => {
           <span v-else>В корзину</span>
         </button>
 
-        <div v-if="showQuantity" class="quantity-selector">
+        <div v-if="showQuantity && isInStock" class="quantity-selector">
           <button
               class="quantity-btn quantity-btn--minus"
               @click="decrement"
@@ -152,9 +152,8 @@ const decrement = () => {
 
 <style lang="scss" scoped>
 .product-card {
-  width: 240px;
+  width: 242px;
   min-height: 401px;
-  height: 100%;
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -286,19 +285,18 @@ const decrement = () => {
 .quantity-selector {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
   background: #f5f5f5;
   padding: 0.5rem;
   border-radius: 8px;
 }
 
 .quantity-btn {
-  width: 32px;
+  width: 20px;
   height: 32px;
   border: none;
   background: white;
   border-radius: 6px;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -325,7 +323,7 @@ const decrement = () => {
 }
 
 .quantity-value {
-  font-weight: 600;
+  font-weight: 500;
   min-width: 50px;
   text-align: center;
 }
