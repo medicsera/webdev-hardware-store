@@ -4,8 +4,8 @@
 
 <template>
   <header class="app-header">
-    <nav class="container">\
-      <router-link to="/home">
+    <nav class="container">
+      <router-link to="/">
         <img src="/small-logo.jpg" alt="" class="logo">
       </router-link>
       <button class="catalog" >
@@ -57,10 +57,10 @@
 }
 
 .logo {
-  display: flex;
-  width: 95px;
+  width: auto;
   height: 50px;
   border-radius: 10px;
+  cursor: pointer;
 }
 
 .catalog{
@@ -74,7 +74,7 @@
   font-size: $default-size;
   background-color: $light-orange-color;
   font-style: oblique;
-
+  cursor: pointer;
 }
 .search {
   display: flex;
@@ -114,6 +114,7 @@
     display: flex;
     justify-content: space-between;
     margin: 0 10%;
+    cursor: pointer;
   }
 }
 
