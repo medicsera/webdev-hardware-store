@@ -2,9 +2,11 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCatalogMenu } from '@/composables/useCatalogMenu'
+import { useCartStore } from '@/stores/cart'
 
 const router = useRouter()
 const { categories, loading, fetchCategoriesTree } = useCatalogMenu()
+const cartStore = useCartStore()
 
 const catalogOpen = ref(false)
 const hoveredCategory = ref<number | null>(null)
@@ -47,6 +49,14 @@ const goToCategory = (slug: string) => {
   router.push(`/catalog/${slug}`)
   catalogOpen.value = false
 }
+
+const goToCart = () => {
+  router.push('/cart')
+}
+
+const goToProfile = () => {
+  router.push('/profile')
+}
 </script>
 
 <template>
@@ -74,13 +84,14 @@ const goToCategory = (slug: string) => {
           <img src="@/assets/telegram-icon.svg" alt=""/>
         </div>
       </div>
-      <div class="cart">
+      <div class="cart" @click="goToCart">
         <button class="cart-btn">
           <img src="@/assets/cart-icon.svg" alt="" />
+          <span v-if="cartStore.totalItems > 0" class="cart-badge">{{ cartStore.totalItems > 99 ? '99+' : cartStore.totalItems }}</span>
         </button>
         <span class="cart-span">Корзина</span>
       </div>
-      <div class="profile">
+      <div class="profile" @click="goToProfile">
         <button class="profile-btn">
           <img src="@/assets/profile-icon.svg" alt="" />
         </button>
@@ -334,20 +345,72 @@ const goToCategory = (slug: string) => {
   align-content: center;
   width: 50px;
   height: 100%;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 
   &-btn {
     display: flex;
     justify-content: center;
+    align-items: center;
+    position: relative;
     background: 0;
     border: 0;
     cursor: pointer;
+    transition: transform 0.2s ease;
+
+    img {
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.1);
+      filter: drop-shadow(0 2px 4px rgba(244, 185, 66, 0.4));
+    }
   }
 
   &-span {
     justify-content: center;
     font-size: $small-size;
     cursor: default;
+    transition: color 0.2s ease;
   }
+
+  &:hover &-span {
+    color: #f4b942;
+  }
+}
+
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: #e74c3c;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 9px;
+  pointer-events: none;
+  animation: badge-pop 0.3s ease;
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 .profile {
@@ -356,6 +419,16 @@ const goToCategory = (slug: string) => {
   align-content: center;
   width: 50px;
   height: 100%;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 
   &-btn {
     display: flex;
@@ -363,12 +436,27 @@ const goToCategory = (slug: string) => {
     background: 0;
     border: 0;
     cursor: pointer;
+    transition: transform 0.2s ease;
+
+    img {
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    &:hover img {
+      transform: scale(1.1) rotate(5deg);
+      filter: drop-shadow(0 2px 4px rgba(244, 185, 66, 0.4));
+    }
   }
 
   &-span {
     justify-content: center;
     font-size: $small-size;
     cursor: default;
+    transition: color 0.2s ease;
+  }
+
+  &:hover &-span {
+    color: #f4b942;
   }
 }
 
