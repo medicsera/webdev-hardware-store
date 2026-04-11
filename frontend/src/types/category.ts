@@ -13,3 +13,17 @@ export interface PopularCategory extends Category {
     productsCount: number
     image?: string
 }
+
+export interface Subcategory {
+    id: number
+    name: string
+    slug: string
+}
+
+export interface CategoryWithSubcategories {
+    id: number
+    name: string
+    slug: string
+    image?: string
+    subcategories?: Subcategory[]
+}
