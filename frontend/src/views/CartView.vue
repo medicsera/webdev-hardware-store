@@ -15,9 +15,6 @@ const deliveryCost = 350
 const freeDeliveryThreshold = 5000
 
 const mockItems = ref<CartItem[]>([
-  { id: 1, name: 'Дрель ударная 650Вт', price: 4500, quantity: 1, image: '/placeholder-product.jpg', inStock: true },
-  { id: 2, name: 'Набор отвёрток 12шт', price: 890, quantity: 2, image: '/placeholder-product.jpg', inStock: true },
-  { id: 3, name: 'Краска акриловая белая 2.5л', price: 1200, quantity: 1, image: '/placeholder-product.jpg', inStock: false },
 ])
 
 const cartItems = computed(() => {
