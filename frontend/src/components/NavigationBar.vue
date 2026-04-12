@@ -3,10 +3,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCatalogMenu } from '@/composables/useCatalogMenu'
 import { useCartStore } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const { categories, loading, fetchCategoriesTree } = useCatalogMenu()
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 
 const catalogOpen = ref(false)
 const hoveredCategory = ref<number | null>(null)
@@ -55,7 +57,16 @@ const goToCart = () => {
 }
 
 const goToProfile = () => {
-  router.push('/profile')
+  if (authStore.isAuthenticated) {
+    router.push('/profile')
+  } else {
+    router.push('/login')
+  }
+}
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/')
 }
 </script>
 
@@ -91,7 +102,20 @@ const goToProfile = () => {
         </button>
         <span class="cart-span">Корзина</span>
       </div>
-      <div class="profile" @click="goToProfile">
+      <div v-if="authStore.isAuthenticated" class="user-menu">
+        <div class="user-info" @click="goToProfile">
+          <button class="user-btn">
+            <img src="@/assets/profile-icon.svg" alt="" />
+          </button>
+          <span class="user-name">{{ authStore.currentUser?.firstName }}</span>
+        </div>
+        <button class="logout-btn" @click="handleLogout" title="Выйти">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M6 14H2V2H6M10 10L14 8L10 6M14 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div v-else class="profile" @click="goToProfile">
         <button class="profile-btn">
           <img src="@/assets/profile-icon.svg" alt="" />
         </button>
@@ -457,6 +481,69 @@ const goToProfile = () => {
 
   &:hover &-span {
     color: #f4b942;
+  }
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.user-btn {
+  display: flex;
+  justify-content: center;
+  background: 0;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+
+  img {
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+
+  &:hover img {
+    transform: scale(1.1) rotate(5deg);
+    filter: drop-shadow(0 2px 4px rgba(244, 185, 66, 0.4));
+  }
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #999;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #e74c3c;
   }
 }
 

@@ -37,7 +37,19 @@ const routes: RouteRecordRaw[] = [
         name: 'cart',
         component: () => import('@/views/CartView.vue'),
         meta: { title: "Корзина" }
-    }
+    },
+    {
+        path: '/login',
+        name: 'login',
+        component: () => import('@/views/LoginView.vue'),
+        meta: { title: "Вход" }
+    },
+    {
+        path: '/register',
+        name: 'register',
+        component: () => import('@/views/RegisterView.vue'),
+        meta: { title: "Регистрация" }
+    },
 ]
 
 const router = createRouter({
