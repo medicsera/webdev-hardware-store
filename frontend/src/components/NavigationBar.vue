@@ -12,7 +12,7 @@ const authStore = useAuthStore()
 
 const catalogOpen = ref(false)
 const hoveredCategory = ref<number | null>(null)
-const catalogRef = ref<HTMLElement | null>(null)
+const catalogDropdownRef = ref<HTMLElement | null>(null)
 
 onMounted(() => {
   fetchCategoriesTree()
@@ -31,7 +31,7 @@ const toggleCatalog = (e: Event) => {
 }
 
 const handleClickOutside = (e: MouseEvent) => {
-  if (catalogRef.value && !catalogRef.value.contains(e.target as Node)) {
+  if (catalogDropdownRef.value && !catalogDropdownRef.value.contains(e.target as Node)) {
     catalogOpen.value = false
   }
 }
@@ -71,7 +71,7 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <header class="app-header" ref="catalogRef">
+  <header class="app-header">
     <nav class="container">
       <router-link to="/">
         <img src="/small-logo.jpg" alt="" class="logo">
@@ -110,7 +110,7 @@ const handleLogout = () => {
           <span class="user-name">{{ authStore.currentUser?.firstName }}</span>
         </div>
         <button class="logout-btn" @click="handleLogout" title="Выйти">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg width="20" height="50" viewBox="0 0 16 16" fill="none">
             <path d="M6 14H2V2H6M10 10L14 8L10 6M14 8H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
@@ -125,7 +125,7 @@ const handleLogout = () => {
 
     <!-- Catalog dropdown -->
     <transition name="slide-down">
-      <div v-if="catalogOpen" class="catalog-dropdown">
+      <div v-if="catalogOpen" class="catalog-dropdown" ref="catalogDropdownRef">
         <div class="catalog-categories">
           <div
             v-if="loading"
@@ -487,13 +487,16 @@ const handleLogout = () => {
 .user-menu {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  height: 100%;
 }
 
 .user-info {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   cursor: pointer;
   transition: transform 0.2s ease;
 
