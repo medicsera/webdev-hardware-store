@@ -58,6 +58,10 @@ const handleSubmit = async () => {
     error.value = 'Введите почту'
     return
   }
+  if (editingPassword.value && form.value.password.length > 0 && form.value.password.length < 6) {
+    error.value = 'Пароль должен содержать минимум 6 символов'
+    return
+  }
 
   isSaving.value = true
 
