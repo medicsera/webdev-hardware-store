@@ -117,5 +117,28 @@ export const useAuthStore = defineStore('auth', () => {
     clearSession()
   }
 
-  return { currentUser, isAuthenticated, init, login, register, logout }
+  function updateProfile(data: { firstName: string; lastName: string; phone: string; email: string }) {
+    if (!currentUser.value) return
+
+    const session = getSession()
+    if (!session) return
+
+    const users = getUsers()
+    const record = users[session.email.toLowerCase()]
+    if (!record) return
+
+    currentUser.value = {
+      ...currentUser.value,
+      ...data
+    }
+
+    record.user = {
+      ...record.user,
+      ...data
+    }
+
+    saveUsers(users)
+  }
+
+  return { currentUser, isAuthenticated, init, login, register, logout, updateProfile }
 })
