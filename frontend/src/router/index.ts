@@ -50,6 +50,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/RegisterView.vue'),
         meta: { title: "Регистрация" }
     },
+    {
+        path: '/profile',
+        name: 'profile',
+        component: () => import('@/views/ProfileView.vue'),
+        meta: { title: "Профиль" }
+    },
 ]
 
 const router = createRouter({
