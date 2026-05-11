@@ -74,6 +74,10 @@ function closeSearch() {
   showDropdown.value = false
 }
 
+function onSearchFocus() {
+  if (searchResults.value.length > 0) showDropdown.value = true
+}
+
 onMounted(() => {
   fetchCategoriesTree()
   document.addEventListener('click', handleClickOutside)
@@ -154,7 +158,7 @@ const handleLogout = () => {
           @input="handleSearchInput"
           @keydown.enter.prevent="navigateToSearch"
           @keydown.escape="closeSearch"
-          @focus="if (searchResults.length > 0) showDropdown = true"
+          @focus="onSearchFocus"
           autocomplete="off"
         />
         <img src="@/assets/search-icon.svg" alt="" class="search-icon" @click="navigateToSearch" />
