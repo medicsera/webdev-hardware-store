@@ -25,8 +25,9 @@ const demoProducts: Product[] = Array.from({ length: 12 }, (_, i) => ({
   id: i + 1,
   name: `Товар ${i + 1}`,
   price: 100 * (i + 1),
-  inStock: true,
-  image: `/placeholder-product.jpg`
+  quantity: 1,
+  imageUrls: [],
+  characteristics: {}
 }))
 
 const productsToShow = computed(() => {
@@ -98,7 +99,7 @@ onUnmounted(() => {
 })
 
 const handleAddToCart = (product: Product) => {
-  cartStore.addToCart(product)
+  cartStore.addToCart(product, 1)
 }
 </script>
 

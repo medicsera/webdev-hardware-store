@@ -1,47 +1,66 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ProductCard from '@/components/ProductCard.vue'
+import { useProducts } from '@/composables/useProducts'
+import { useCategories } from '@/composables/useCategories'
+import type { Category } from '@/types/category'
 import type { Product } from '@/types/product'
 
 const route = useRoute()
-
-const categorySlug = computed(() => route.params.categorySlug as string | undefined)
-const subcategorySlug = computed(() => route.params.subcategorySlug as string | undefined)
-
-const breadcrumbCategory = computed(() => categorySlug.value || 'Категория')
-const breadcrumbSubcategory = computed(() => subcategorySlug.value || 'Подкатегория')
+const { products, loading, fetchProducts } = useProducts()
+const { allCategories, fetchAllCategories } = useCategories()
 
 const sortBy = ref<'default' | 'price-asc' | 'price-desc'>('default')
-
 const priceFrom = ref('')
 const priceTo = ref('')
 
-const mockProducts: Product[] = Array.from({ length: 16 }, (_, i) => ({
-  id: i + 1,
-  name: 'Название товара',
-  price: 100,
-  inStock: true,
-  image: '/placeholder-product.jpg'
-}))
+const categorySlug    = computed(() => route.params.categorySlug as string | undefined)
+const subcategorySlug = computed(() => route.params.subcategorySlug as string | undefined)
 
-const sortedProducts = computed(() => {
-  const products = [...mockProducts]
-  if (sortBy.value === 'price-asc') {
-    products.sort((a, b) => a.price - b.price)
-  } else if (sortBy.value === 'price-desc') {
-    products.sort((a, b) => b.price - a.price)
-  }
-  return products
+const currentCatalog = computed<Category | undefined>(() =>
+  allCategories.value.find(c => c.slug === categorySlug.value)
+)
+
+const currentSubcatalog = computed(() =>
+  currentCatalog.value?.subcategories?.find(s => s.slug === subcategorySlug.value)
+)
+
+const breadcrumbCategory    = computed(() => currentCatalog.value?.name    ?? categorySlug.value    ?? 'Каталог')
+const breadcrumbSubcategory = computed(() => currentSubcatalog.value?.name ?? subcategorySlug.value ?? '')
+
+async function loadProducts() {
+  const catId = currentCatalog.value?.id
+  const subId = currentSubcatalog.value?.id
+  await fetchProducts(0, 40, catId, subId)
+}
+
+const filteredProducts = computed<Product[]>(() => {
+  let list = [...products.value]
+  const from = parseFloat(priceFrom.value)
+  const to   = parseFloat(priceTo.value)
+  if (!isNaN(from)) list = list.filter(p => p.price >= from)
+  if (!isNaN(to))   list = list.filter(p => p.price <= to)
+  if (sortBy.value === 'price-asc')  list.sort((a, b) => a.price - b.price)
+  if (sortBy.value === 'price-desc') list.sort((a, b) => b.price - a.price)
+  return list
 })
 
-const handleAddToCart = (product: Product) => {
-  console.log('Added to cart:', product)
-}
+onMounted(async () => {
+  await fetchAllCategories()
+  await loadProducts()
+})
 
-const handleQuantityChange = (productId: number, quantity: number) => {
-  console.log('Quantity changed:', productId, quantity)
-}
+watch([categorySlug, subcategorySlug], async () => {
+  await loadProducts()
+})
+
+watch(allCategories, async (cats) => {
+  if (cats.length > 0) await loadProducts()
+}, { once: true })
+
+const handleAddToCart = (_product: Product) => {}
+const handleQuantityChange = (_id: number, _qty: number) => {}
 </script>
 
 <template>
@@ -56,8 +75,10 @@ const handleQuantityChange = (productId: number, quantity: number) => {
         </router-link>
         <span class="breadcrumbs__separator">/</span>
         <span class="breadcrumbs__item">{{ breadcrumbCategory }}</span>
-        <span v-if="subcategorySlug" class="breadcrumbs__separator">/</span>
-        <span v-if="subcategorySlug" class="breadcrumbs__item breadcrumbs__item--active">{{ breadcrumbSubcategory }}</span>
+        <template v-if="breadcrumbSubcategory">
+          <span class="breadcrumbs__separator">/</span>
+          <span class="breadcrumbs__item breadcrumbs__item--active">{{ breadcrumbSubcategory }}</span>
+        </template>
       </div>
 
       <div class="catalog-layout">
@@ -70,45 +91,37 @@ const handleQuantityChange = (productId: number, quantity: number) => {
             <span>Фильтр</span>
           </div>
 
-          <!-- Product Type Filter -->
-          <div class="filter-section">
-            <h4 class="filter-section__title">Тип товара</h4>
-            <label class="filter-checkbox" v-for="n in 4" :key="n">
-              <input type="checkbox" />
-              <span class="filter-checkbox__mark"></span>
-              <span>Название</span>
-            </label>
-          </div>
-
           <!-- Price Filter -->
           <div class="filter-section">
             <h4 class="filter-section__title">Цена</h4>
             <div class="price-range">
               <div class="price-range__field">
                 <label>от</label>
-                <input type="text" v-model="priceFrom" class="price-range__input" placeholder="0" />
+                <input type="number" v-model="priceFrom" class="price-range__input" placeholder="0" min="0" />
               </div>
               <div class="price-range__field">
                 <label>до</label>
-                <input type="text" v-model="priceTo" class="price-range__input" placeholder="100000" />
+                <input type="number" v-model="priceTo" class="price-range__input" placeholder="∞" min="0" />
                 <span class="price-range__currency">₽</span>
               </div>
             </div>
           </div>
 
-          <!-- Name Filter -->
-          <div class="filter-section">
-            <h4 class="filter-section__title">Название</h4>
-            <label class="filter-checkbox">
-              <input type="checkbox" />
-              <span class="filter-checkbox__mark"></span>
-              <span>вариант 1</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" />
-              <span class="filter-checkbox__mark"></span>
-              <span>вариант 2</span>
-            </label>
+          <!-- Subcategories -->
+          <div v-if="currentCatalog?.subcategories?.length" class="filter-section">
+            <h4 class="filter-section__title">Подразделы</h4>
+            <router-link
+              :to="`/catalog/${categorySlug}`"
+              class="filter-subcat"
+              :class="{ 'filter-subcat--active': !subcategorySlug }"
+            >Все</router-link>
+            <router-link
+              v-for="sub in currentCatalog.subcategories"
+              :key="sub.id"
+              :to="`/catalog/${categorySlug}/${sub.slug}`"
+              class="filter-subcat"
+              :class="{ 'filter-subcat--active': subcategorySlug === sub.slug }"
+            >{{ sub.name }}</router-link>
           </div>
         </aside>
 
@@ -116,32 +129,34 @@ const handleQuantityChange = (productId: number, quantity: number) => {
         <div class="catalog-content">
           <!-- Sort Bar -->
           <div class="sort-bar">
-            <button
-              class="sort-btn"
-              :class="{ 'sort-btn--active': sortBy === 'default' }"
-              @click="sortBy = 'default'"
-            >
+            <button class="sort-btn" :class="{ 'sort-btn--active': sortBy === 'default' }" @click="sortBy = 'default'">
               По умолчанию
             </button>
             <button
               class="sort-btn"
-              :class="{ 'sort-btn--active': sortBy === 'price-asc' }"
+              :class="{ 'sort-btn--active': sortBy === 'price-asc' || sortBy === 'price-desc' }"
               @click="sortBy = sortBy === 'price-asc' ? 'price-desc' : 'price-asc'"
             >
               По цене
-              <svg v-if="sortBy === 'price-asc'" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 2L10 8H2L6 2Z" fill="#f4b942"/>
-              </svg>
-              <svg v-else-if="sortBy === 'price-desc'" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 10L2 4H10L6 10Z" fill="#f4b942"/>
-              </svg>
+              <svg v-if="sortBy === 'price-asc'" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2L10 8H2L6 2Z" fill="#f4b942"/></svg>
+              <svg v-else-if="sortBy === 'price-desc'" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 10L2 4H10L6 10Z" fill="#f4b942"/></svg>
             </button>
           </div>
 
+          <!-- Loading -->
+          <div v-if="loading" class="products-grid">
+            <ProductCard v-for="n in 8" :key="n" :product="undefined" />
+          </div>
+
+          <!-- Empty -->
+          <div v-else-if="filteredProducts.length === 0" class="catalog-empty">
+            <p>Товаров не найдено</p>
+          </div>
+
           <!-- Products -->
-          <div class="products-grid">
+          <div v-else class="products-grid">
             <ProductCard
-              v-for="product in sortedProducts"
+              v-for="product in filteredProducts"
               :key="product.id"
               :product="product"
               :show-add-to-cart="true"
@@ -169,7 +184,6 @@ const handleQuantityChange = (productId: number, quantity: number) => {
   padding: 0 20px;
 }
 
-// Breadcrumbs
 .breadcrumbs {
   display: flex;
   align-items: center;
@@ -183,41 +197,29 @@ const handleQuantityChange = (productId: number, quantity: number) => {
     color: #999;
     text-decoration: none;
     transition: color 0.2s;
-
-    &:hover {
-      color: #f4b942;
-    }
+    &:hover { color: #f4b942; }
   }
 
-  &__separator {
-    color: #ccc;
-    font-size: 12px;
-  }
+  &__separator { color: #ccc; font-size: 12px; }
 
   &__item {
     color: #666;
-
-    &--active {
-      color: #2c3e50;
-      font-weight: 600;
-    }
+    &--active { color: #2c3e50; font-weight: 600; }
   }
 }
 
-// Layout
 .catalog-layout {
   display: flex;
   gap: 20px;
   align-items: flex-start;
 }
 
-// Sidebar
 .catalog-sidebar {
   width: 220px;
   flex-shrink: 0;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   overflow: hidden;
 }
 
@@ -235,66 +237,19 @@ const handleQuantityChange = (productId: number, quantity: number) => {
 .filter-section {
   padding: 14px 16px;
   border-bottom: 1px solid #eee;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &__title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0 0 10px;
-  }
+  &:last-child { border-bottom: none; }
+  &__title { font-size: 13px; font-weight: 600; color: #2c3e50; margin: 0 0 10px; }
 }
 
-.filter-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #555;
-  cursor: pointer;
-  margin-bottom: 6px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  input[type="checkbox"] {
-    display: none;
-  }
-
-  &__mark {
-    width: 16px;
-    height: 16px;
-    border: 1.5px solid #ccc;
-    border-radius: 3px;
-    flex-shrink: 0;
-    transition: all 0.15s;
-    position: relative;
-  }
-
-  input:checked + &__mark {
-    background: #f4b942;
-    border-color: #f4b942;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 5px;
-      width: 4px;
-      height: 7px;
-      border: solid white;
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg);
-    }
-  }
-
-  &:hover &__mark {
-    border-color: #f4b942;
-  }
+.filter-subcat {
+  display: block;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #666;
+  text-decoration: none;
+  transition: color 0.15s;
+  &:hover { color: #f4b942; }
+  &--active { color: #f4b942; font-weight: 600; }
 }
 
 .price-range {
@@ -308,11 +263,7 @@ const handleQuantityChange = (productId: number, quantity: number) => {
     gap: 6px;
     font-size: 12px;
     color: #666;
-
-    label {
-      flex-shrink: 0;
-      width: 14px;
-    }
+    label { flex-shrink: 0; width: 14px; }
   }
 
   &__input {
@@ -324,26 +275,14 @@ const handleQuantityChange = (productId: number, quantity: number) => {
     font-size: 12px;
     outline: none;
     transition: border-color 0.2s;
-
-    &:focus {
-      border-color: #f4b942;
-    }
+    &:focus { border-color: #f4b942; }
   }
 
-  &__currency {
-    font-size: 12px;
-    color: #666;
-    flex-shrink: 0;
-  }
+  &__currency { font-size: 12px; color: #666; flex-shrink: 0; }
 }
 
-// Content
-.catalog-content {
-  flex: 1;
-  min-width: 0;
-}
+.catalog-content { flex: 1; min-width: 0; }
 
-// Sort Bar
 .sort-bar {
   display: flex;
   gap: 16px;
@@ -351,7 +290,7 @@ const handleQuantityChange = (productId: number, quantity: number) => {
   padding: 10px 16px;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 .sort-btn {
@@ -365,42 +304,32 @@ const handleQuantityChange = (productId: number, quantity: number) => {
   align-items: center;
   gap: 4px;
   transition: color 0.2s;
-
-  &:hover {
-    color: #666;
-  }
-
-  &--active {
-    color: #f4b942;
-    font-weight: 600;
-  }
+  &:hover { color: #666; }
+  &--active { color: #f4b942; font-weight: 600; }
 }
 
-// Products Grid
 .products-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
-// Responsive
+.catalog-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #aaa;
+  font-size: 15px;
+  background: white;
+  border-radius: 8px;
+}
+
 @media (max-width: 1024px) {
-  .products-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  .products-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .catalog-layout {
-    flex-direction: column;
-  }
-
-  .catalog-sidebar {
-    width: 100%;
-  }
-
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .catalog-layout { flex-direction: column; }
+  .catalog-sidebar { width: 100%; }
+  .products-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>

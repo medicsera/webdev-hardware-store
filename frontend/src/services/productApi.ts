@@ -3,8 +3,11 @@ import type { Product, PaginatedResponse } from '@/types/product'
 const API_BASE_URL = import.meta.env.VITE_API_URL
 
 export const productService = {
-    async getProducts(page = 0, size = 20): Promise<PaginatedResponse<Product>> {
-        const response = await fetch(`${API_BASE_URL}/products?page=${page}&size=${size}`)
+    async getProducts(page = 0, size = 20, catalogId?: number, subCatalogId?: number): Promise<PaginatedResponse<Product>> {
+        const params = new URLSearchParams({ page: String(page), size: String(size) })
+        if (subCatalogId != null) params.set('subCatalogId', String(subCatalogId))
+        else if (catalogId != null) params.set('catalogId', String(catalogId))
+        const response = await fetch(`${API_BASE_URL}/products?${params}`)
         if (!response.ok) throw new Error('Failed to fetch products')
         return response.json()
     },

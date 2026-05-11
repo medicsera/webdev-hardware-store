@@ -14,8 +14,17 @@ class PublicProductController(private val productRepository: ProductRepository) 
     @GetMapping
     fun getAll(
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "10") size: Int
-    ): Page<Product> = productRepository.findAll(PageRequest.of(page, size))
+        @RequestParam(defaultValue = "10") size: Int,
+        @RequestParam(required = false) catalogId: Long?,
+        @RequestParam(required = false) subCatalogId: Long?
+    ): Page<Product> {
+        val pageable = PageRequest.of(page, size)
+        return when {
+            subCatalogId != null -> productRepository.findBySubCatalogId(subCatalogId, pageable)
+            catalogId != null    -> productRepository.findByCatalogId(catalogId, pageable)
+            else                 -> productRepository.findAll(pageable)
+        }
+    }
 
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long): ResponseEntity<Product> =

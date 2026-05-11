@@ -2,83 +2,53 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
+import { productService } from '@/services/productApi'
 import type { Product } from '@/types/product'
 
 const route = useRoute()
 const cartStore = useCartStore()
 
-const loading = ref(true)
+const loading  = ref(true)
 const quantity = ref(1)
 const isAdding = ref(false)
-
-const product = ref<Product | null>(null)
-
-const mockProduct: Product = {
-  id: 1,
-  name: 'Товар',
-  price: 100,
-  inStock: true,
-  image: '/placeholder-product.jpg',
-  description: 'Текст описания',
-  specifications: {
-    'Размер': '2x2x2',
-    'Вес': '2кг.'
-  }
-}
+const product  = ref<Product | null>(null)
+const activeImage = ref(0)
 
 const formattedPrice = computed(() => {
   if (!product.value) return '0 ₽'
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 2,
-  }).format(product.value.price)
+  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2 })
+    .format(product.value.price)
 })
 
-const imageUrl = computed(() => product.value?.image || '/placeholder-product.jpg')
+const imageUrl = computed(() => {
+  const urls = product.value?.imageUrls
+  if (!urls?.length) return '/placeholder-product.jpg'
+  return urls[activeImage.value] ?? urls[0]
+})
+
+const isInStock = computed(() => (product.value?.quantity ?? 0) > 0)
 
 const fetchProduct = async () => {
   loading.value = true
+  activeImage.value = 0
   try {
-    // const data = await productService.getProductById(Number(route.params.id))
-    // product.value = data
-    await new Promise(r => setTimeout(r, 300))
-    product.value = mockProduct
+    product.value = await productService.getProductById(Number(route.params.id))
   } catch {
-    product.value = mockProduct
+    product.value = null
   } finally {
     loading.value = false
   }
 }
 
-watch(
-  () => route.params.id,
-  () => {
-    fetchProduct()
-  }
-)
-
-const increment = () => {
-  quantity.value++
-}
-
-const decrement = () => {
-  if (quantity.value <= 1) return
-  quantity.value--
-}
+watch(() => route.params.id, fetchProduct)
+onMounted(fetchProduct)
 
 const handleAddToCart = () => {
   if (!product.value || isAdding.value) return
   isAdding.value = true
-  cartStore.addToCart({ ...product.value, quantity: quantity.value })
-  setTimeout(() => {
-    isAdding.value = false
-  }, 2000)
+  cartStore.addToCart(product.value, quantity.value)
+  setTimeout(() => { isAdding.value = false }, 2000)
 }
-
-onMounted(() => {
-  fetchProduct()
-})
 </script>
 
 <template>
@@ -92,49 +62,64 @@ onMounted(() => {
           </svg>
         </router-link>
         <span class="breadcrumbs__separator">/</span>
-        <span class="breadcrumbs__item">Категория</span>
-        <span class="breadcrumbs__separator">/</span>
-        <span class="breadcrumbs__item breadcrumbs__item--active">Товар</span>
+        <span class="breadcrumbs__item breadcrumbs__item--active">{{ product?.name ?? 'Товар' }}</span>
       </div>
 
-      <h1 class="product-title">Товар</h1>
+      <h1 class="product-title">{{ product?.name ?? '...' }}</h1>
 
-      <!-- Product Detail -->
+      <!-- Loading skeleton -->
       <div v-if="loading" class="product-detail product-detail--loading">
         <div class="product-image product-image--skeleton"></div>
         <div class="product-specs product-specs--skeleton"></div>
         <div class="product-buy product-buy--skeleton"></div>
       </div>
 
+      <!-- Not found -->
+      <div v-else-if="!product" class="product-notfound">
+        Товар не найден
+      </div>
+
       <div v-else class="product-detail">
-        <!-- Image -->
-        <div class="product-image">
-          <img :src="imageUrl" :alt="product?.name" />
+        <!-- Image gallery -->
+        <div class="product-gallery">
+          <div class="product-image">
+            <img :src="imageUrl" :alt="product.name" />
+          </div>
+          <div v-if="product.imageUrls.length > 1" class="product-thumbnails">
+            <button
+              v-for="(url, i) in product.imageUrls"
+              :key="i"
+              class="product-thumbnail"
+              :class="{ 'product-thumbnail--active': activeImage === i }"
+              @click="activeImage = i"
+            >
+              <img :src="url" :alt="`Фото ${i + 1}`" />
+            </button>
+          </div>
         </div>
 
         <!-- Specifications -->
         <div class="product-specs">
           <h3 class="product-specs__title">Характеристики</h3>
-          <div
-            v-for="(value, key) in product?.specifications"
-            :key="key"
-            class="spec-row"
-          >
-            <span class="spec-row__label">{{ key }}</span>
-            <span class="spec-row__dots"></span>
-            <span class="spec-row__value">{{ value }}</span>
-          </div>
+          <template v-if="Object.keys(product.characteristics).length">
+            <div v-for="(value, key) in product.characteristics" :key="key" class="spec-row">
+              <span class="spec-row__label">{{ key }}</span>
+              <span class="spec-row__dots"></span>
+              <span class="spec-row__value">{{ value }}</span>
+            </div>
+          </template>
+          <p v-else class="spec-empty">Характеристики не указаны</p>
         </div>
 
         <!-- Buy Block -->
         <div class="product-buy">
           <div class="product-buy__price">{{ formattedPrice }}</div>
-          <div class="product-buy__stock" :class="{ 'product-buy__stock--out': !product?.inStock }">
-            {{ product?.inStock ? 'В наличии' : 'Нет в наличии' }}
+          <div class="product-buy__stock" :class="{ 'product-buy__stock--out': !isInStock }">
+            {{ isInStock ? 'В наличии' : 'Нет в наличии' }}
           </div>
           <div class="product-buy__actions">
             <button
-              v-if="product?.inStock"
+              v-if="isInStock"
               class="btn-add-to-cart"
               :class="{ 'btn-add-to-cart--adding': isAdding }"
               @click="handleAddToCart"
@@ -143,20 +128,20 @@ onMounted(() => {
               <span v-if="isAdding">✓ Добавлено</span>
               <span v-else>В корзину</span>
             </button>
-            <div v-if="product?.inStock" class="quantity-selector">
-              <button class="quantity-btn quantity-btn--minus" @click="decrement" :disabled="quantity <= 1">−</button>
+            <div v-if="isInStock" class="quantity-selector">
+              <button class="quantity-btn quantity-btn--minus" @click="quantity > 1 && quantity--" :disabled="quantity <= 1">−</button>
               <span class="quantity-value">{{ quantity }} шт.</span>
-              <button class="quantity-btn quantity-btn--plus" @click="increment">+</button>
+              <button class="quantity-btn quantity-btn--plus" @click="quantity++">+</button>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Description -->
-      <div class="product-description">
+      <div v-if="product" class="product-description">
         <div class="product-description__header">Описание</div>
         <div class="product-description__content">
-          {{ product?.description || 'Текст описания' }}
+          {{ product.description || '—' }}
         </div>
       </div>
     </div>
@@ -176,7 +161,6 @@ onMounted(() => {
   padding: 0 20px;
 }
 
-// Breadcrumbs
 .breadcrumbs {
   display: flex;
   align-items: center;
@@ -189,25 +173,14 @@ onMounted(() => {
     align-items: center;
     color: #999;
     text-decoration: none;
-    transition: color 0.2s;
-
-    &:hover {
-      color: #f4b942;
-    }
+    &:hover { color: #f4b942; }
   }
 
-  &__separator {
-    color: #ccc;
-    font-size: 12px;
-  }
+  &__separator { color: #ccc; font-size: 12px; }
 
   &__item {
     color: #666;
-
-    &--active {
-      color: #2c3e50;
-      font-weight: 600;
-    }
+    &--active { color: #2c3e50; font-weight: 600; }
   }
 }
 
@@ -218,7 +191,6 @@ onMounted(() => {
   margin: 0 0 24px;
 }
 
-// Product Detail Layout
 .product-detail {
   display: flex;
   gap: 24px;
@@ -234,35 +206,37 @@ onMounted(() => {
       animation: skeleton-loading 1.5s infinite;
       border-radius: 8px;
     }
-
-    .product-image--skeleton {
-      width: 520px;
-      height: 380px;
-      flex-shrink: 0;
-    }
-
-    .product-specs--skeleton {
-      flex: 1;
-      height: 120px;
-    }
-
-    .product-buy--skeleton {
-      width: 260px;
-      height: 140px;
-    }
+    .product-image--skeleton { width: 520px; height: 380px; flex-shrink: 0; }
+    .product-specs--skeleton { flex: 1; height: 120px; }
+    .product-buy--skeleton   { width: 260px; height: 140px; }
   }
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
+  0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
-// Image
+.product-notfound {
+  text-align: center;
+  padding: 60px;
+  color: #aaa;
+  font-size: 16px;
+  background: white;
+  border-radius: 8px;
+}
+
+// Gallery
+.product-gallery {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .product-image {
   width: 520px;
   height: 380px;
-  flex-shrink: 0;
   background: #ddd;
   border-radius: 4px;
   overflow: hidden;
@@ -271,10 +245,34 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
 }
 
-// Specifications
+.product-thumbnails {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.product-thumbnail {
+  width: 64px;
+  height: 64px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  transition: border-color 0.15s;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  &--active { border-color: #f4b942; }
+  &:hover { border-color: #f4b942; }
+}
+
+// Specs
 .product-specs {
   flex: 1;
   min-width: 0;
@@ -294,11 +292,7 @@ onMounted(() => {
   margin-bottom: 6px;
   font-size: 13px;
 
-  &__label {
-    color: #555;
-    flex-shrink: 0;
-  }
-
+  &__label { color: #555; flex-shrink: 0; }
   &__dots {
     flex: 1;
     border-bottom: 1px dotted #aaa;
@@ -307,13 +301,10 @@ onMounted(() => {
     position: relative;
     top: -3px;
   }
-
-  &__value {
-    color: #2c3e50;
-    font-weight: 500;
-    flex-shrink: 0;
-  }
+  &__value { color: #2c3e50; font-weight: 500; flex-shrink: 0; }
 }
+
+.spec-empty { font-size: 13px; color: #aaa; margin: 0; }
 
 // Buy Block
 .product-buy {
@@ -336,10 +327,7 @@ onMounted(() => {
     color: #27ae60;
     font-weight: 500;
     margin-bottom: 10px;
-
-    &--out {
-      color: #e74c3c;
-    }
+    &--out { color: #e74c3c; }
   }
 
   &__actions {
@@ -360,19 +348,9 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover:not(:disabled) {
-    background: #e0a830;
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  &--adding {
-    background: #42b983;
-    color: white;
-  }
+  &:hover:not(:disabled) { background: #e0a830; }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+  &--adding { background: #42b983; color: white; }
 }
 
 .quantity-selector {
@@ -398,23 +376,10 @@ onMounted(() => {
   justify-content: center;
   transition: all 0.2s;
 
-  &:hover:not(:disabled) {
-    background: #42b983;
-    color: white;
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  &--minus {
-    color: #e74c3c;
-  }
-
-  &--plus {
-    color: #27ae60;
-  }
+  &:hover:not(:disabled) { background: #42b983; color: white; }
+  &:disabled { opacity: 0.3; cursor: not-allowed; }
+  &--minus { color: #e74c3c; }
+  &--plus  { color: #27ae60; }
 }
 
 .quantity-value {
@@ -450,5 +415,11 @@ onMounted(() => {
     min-height: 200px;
     line-height: 1.6;
   }
+}
+
+@media (max-width: 900px) {
+  .product-detail { flex-direction: column; }
+  .product-image  { width: 100%; height: 280px; }
+  .product-buy    { width: 100%; }
 }
 </style>

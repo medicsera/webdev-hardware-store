@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import type { Product } from '@/types/product'
 
 interface Props {
@@ -23,12 +23,6 @@ const emit = defineEmits<{
 
 const quantity = ref(1)
 
-watch(() => props.product, (newProduct) => {
-  if (newProduct) {
-    quantity.value = newProduct.quantity || 1
-  }
-}, { immediate: true })
-
 const isAdding = ref(false)
 
 const formattedPrice = computed(() => {
@@ -42,11 +36,12 @@ const formattedPrice = computed(() => {
 })
 
 const imageUrl = computed(() => {
-  return props.product?.image || '/placeholder-product.jpg'
+  const urls = props.product?.imageUrls
+  return (urls && urls.length > 0) ? urls[0] : '/placeholder-product.jpg'
 })
 
 const isInStock = computed(() => {
-  return props.product?.inStock !== false
+  return (props.product?.quantity ?? 1) > 0
 })
 
 const productName = computed(() => {
@@ -55,13 +50,9 @@ const productName = computed(() => {
 
 const handleAddToCart = () => {
   if (!props.product || isAdding.value) return
-
   isAdding.value = true
-  emit('addToCart', { ...props.product, quantity: quantity.value })
-
-  setTimeout(() => {
-    isAdding.value = false
-  }, 2000)
+  emit('addToCart', props.product)
+  setTimeout(() => { isAdding.value = false }, 2000)
 }
 
 const increment = () => {

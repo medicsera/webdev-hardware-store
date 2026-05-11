@@ -1,6 +1,7 @@
 package com.example.webdev_hardware_store.controller
 
 import com.example.webdev_hardware_store.repository.CatalogRepository
+import com.example.webdev_hardware_store.repository.ProductRepository
 import com.example.webdev_hardware_store.repository.SubCatalogRepository
 import org.springframework.web.bind.annotation.*
 
@@ -9,6 +10,8 @@ data class CategoryTreeDto(
     val id: Long,
     val name: String,
     val slug: String,
+    val imageUrl: String?,
+    val productsCount: Long,
     val subcategories: List<SubcategoryDto>
 )
 
@@ -16,7 +19,8 @@ data class CategoryTreeDto(
 @RequestMapping("/categories")
 class PublicCatalogController(
     private val catalogRepo: CatalogRepository,
-    private val subCatalogRepo: SubCatalogRepository
+    private val subCatalogRepo: SubCatalogRepository,
+    private val productRepo: ProductRepository
 ) {
     @GetMapping
     fun getAll(): List<CategoryTreeDto> = buildTree()
@@ -35,6 +39,8 @@ class PublicCatalogController(
                 id = cat.id,
                 name = cat.name,
                 slug = cat.slug,
+                imageUrl = cat.imageUrl,
+                productsCount = productRepo.countByCatalogId(cat.id),
                 subcategories = (subcatalogsByParent[cat.id] ?: emptyList())
                     .map { SubcategoryDto(it.id, it.name, it.slug) }
             )

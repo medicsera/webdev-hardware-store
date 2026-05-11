@@ -7,7 +7,6 @@ const router = useRouter()
 const { popularCategories, loading, fetchPopularCategories } = useCategories()
 
 onMounted(() => {
-  console.log('onMounted - начинаем загрузку категорий')
   fetchPopularCategories(6)
 })
 
@@ -26,7 +25,7 @@ const handleImageError = (e: Event) => {
   <section class="popular-categories">
     <div class="popular-categories__header">
       <h2 class="popular-categories__title">Популярные категории</h2>
-      <router-link to="/catalog" class="popular-categories__all">
+      <router-link to="/categories" class="popular-categories__all">
         Все категории →
       </router-link>
     </div>
@@ -56,7 +55,7 @@ const handleImageError = (e: Event) => {
         >
           <div class="category-card__image-wrapper">
             <img
-                :src="category.image || '/images/placeholder-product.jpg'"
+                :src="category.imageUrl || '/images/placeholder-product.jpg'"
                 :alt="category.name"
                 class="category-card__image"
                 loading="lazy"

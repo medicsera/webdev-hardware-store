@@ -163,6 +163,9 @@ const handleLogout = () => {
           <div v-else class="subcategory-placeholder">
             Выберите категорию
           </div>
+          <router-link to="/categories" class="all-categories-link" @click="catalogOpen = false">
+            Все категории →
+          </router-link>
         </div>
       </div>
     </transition>
@@ -308,6 +311,21 @@ const handleLogout = () => {
   padding: 20px 12px;
   font-size: 14px;
   color: #999;
+}
+
+.all-categories-link {
+  display: inline-block;
+  margin-top: auto;
+  padding: 10px 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f4b942;
+  text-decoration: none;
+  transition: color 0.15s;
+
+  &:hover {
+    color: #d4a035;
+  }
 }
 
 // Slide-down transition

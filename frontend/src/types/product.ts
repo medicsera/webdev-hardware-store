@@ -2,16 +2,16 @@ export interface Product {
     id: number
     name: string
     price: number
-    image?: string
     description?: string
-    category?: string
-    inStock?: boolean
-    quantity?: number
-    specifications?: Record<string, string>
+    quantity: number
+    catalogId?: number | null
+    subCatalogId?: number | null
+    imageUrls: string[]
+    characteristics: Record<string, string>
 }
 
 export interface CartItem extends Product {
-    quantity: number
+    cartQuantity: number
 }
 
 export interface PaginatedResponse<T> {

@@ -1,9 +1,9 @@
-import type { Category, PopularCategory, CategoryWithSubcategories } from '@/types/category'
+import type { Category } from '@/types/category'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
 
 export const categoryService = {
-    async getPopularCategories(limit = 6): Promise<PopularCategory[]> {
+    async getPopularCategories(limit = 6): Promise<Category[]> {
         const response = await fetch(`${API_BASE_URL}/categories/popular?limit=${limit}`)
         if (!response.ok) throw new Error('Failed to fetch popular categories')
         return response.json()
@@ -15,7 +15,7 @@ export const categoryService = {
         return response.json()
     },
 
-    async getCategoriesTree(): Promise<CategoryWithSubcategories[]> {
+    async getCategoriesTree(): Promise<Category[]> {
         const response = await fetch(`${API_BASE_URL}/categories/tree`)
         if (!response.ok) throw new Error('Failed to fetch categories tree')
         return response.json()

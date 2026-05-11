@@ -12,6 +12,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Главная" }
     },
     {
+        path: '/categories',
+        name: 'categories',
+        component: () => import('@/views/CategoriesView.vue'),
+        meta: { title: "Все категории" }
+    },
+    {
         path: '/catalog',
         name: 'catalog',
         component: () => import('@/views/CatalogView.vue'),

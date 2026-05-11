@@ -23,7 +23,7 @@ data class Product(
     var catalogId: Long? = null,
     var subCatalogId: Long? = null,
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_images", joinColumns = [JoinColumn(name = "product_id")])
     @Column(name = "image_url")
     var imageUrls: MutableList<String> = mutableListOf(),

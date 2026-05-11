@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { CartItem, Product } from '@/types/product'
+import type { Product } from '@/types/product'
+
+export interface CartItem {
+    id: number
+    name: string
+    price: number
+    imageUrls: string[]
+    cartQuantity: number
+}
 
 const CART_KEY = 'cart_items'
 
@@ -21,19 +29,25 @@ export const useCartStore = defineStore('cart', () => {
     }, { deep: true })
 
     const totalItems = computed(() =>
-        items.value.reduce((sum, item) => sum + item.quantity, 0)
+        items.value.reduce((sum, item) => sum + item.cartQuantity, 0)
     )
 
     const totalPrice = computed(() =>
-        items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
+        items.value.reduce((sum, item) => sum + item.price * item.cartQuantity, 0)
     )
 
-    function addToCart(product: Product) {
-        const existingItem = items.value.find(item => item.id === product.id)
-        if (existingItem) {
-            existingItem.quantity += product.quantity || 1
+    function addToCart(product: Product, qty = 1) {
+        const existing = items.value.find(item => item.id === product.id)
+        if (existing) {
+            existing.cartQuantity += qty
         } else {
-            items.value.push({ ...product, quantity: product.quantity || 1 })
+            items.value.push({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                imageUrls: product.imageUrls,
+                cartQuantity: qty,
+            })
         }
     }
 
@@ -43,7 +57,7 @@ export const useCartStore = defineStore('cart', () => {
 
     function updateQuantity(productId: number, quantity: number) {
         const item = items.value.find(item => item.id === productId)
-        if (item) item.quantity = Math.max(1, quantity)
+        if (item) item.cartQuantity = Math.max(1, quantity)
     }
 
     function clearCart() {
