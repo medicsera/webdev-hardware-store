@@ -3,6 +3,9 @@ package com.example.webdev_hardware_store.service
 import com.example.webdev_hardware_store.dto.ProductDto
 import com.example.webdev_hardware_store.model.Product
 import com.example.webdev_hardware_store.repository.ProductRepository
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.annotation.Caching
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -43,6 +46,9 @@ class ProductService(private val productRepository: ProductRepository) {
     )
 
     @Transactional
+    @Caching(evict = [
+        CacheEvict(value = ["product"], allEntries = true)
+    ])
     fun save(dto: ProductDto): ProductDto {
         val entity = if (dto.id != null) {
             val existing = productRepository.findById(dto.id)
@@ -55,6 +61,7 @@ class ProductService(private val productRepository: ProductRepository) {
     }
 
     @Transactional
+    @CacheEvict(value = ["product"], key = "#id")
     fun addImages(id: Long, urls: List<String>): ProductDto {
         val product = productRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Product $id not found") }
@@ -63,6 +70,7 @@ class ProductService(private val productRepository: ProductRepository) {
     }
 
     @Transactional
+    @CacheEvict(value = ["product"], key = "#id")
     fun removeImage(id: Long, imageUrl: String): ProductDto {
         val product = productRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Product $id not found") }
@@ -71,6 +79,7 @@ class ProductService(private val productRepository: ProductRepository) {
     }
 
     @Transactional
+    @CacheEvict(value = ["product"], key = "#id")
     fun delete(id: Long) {
         if (!productRepository.existsById(id)) {
             throw IllegalArgumentException("Product $id does not exist")
@@ -80,6 +89,7 @@ class ProductService(private val productRepository: ProductRepository) {
 
     fun findAll(): List<ProductDto> = productRepository.findAll().map { toDto(it) }
 
+    @Cacheable(value = ["product"], key = "#id")
     fun findById(id: Long): ProductDto =
         productRepository.findById(id)
             .map { toDto(it) }

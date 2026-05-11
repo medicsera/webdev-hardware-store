@@ -9,6 +9,7 @@ import com.example.webdev_hardware_store.repository.OrderRepository
 import com.example.webdev_hardware_store.repository.ProductRepository
 import com.example.webdev_hardware_store.repository.UserRepository
 import jakarta.transaction.Transactional
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -88,6 +89,7 @@ class BuyerController(
     }
 
     @Transactional
+    @CacheEvict(value = ["product"], allEntries = true)
     @PostMapping("/orders")
     fun createOrder(
         @AuthenticationPrincipal principal: CustomUserDetails,

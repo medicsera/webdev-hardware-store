@@ -1,7 +1,9 @@
 package com.example.webdev_hardware_store.controller
 
+import com.example.webdev_hardware_store.dto.ProductDto
 import com.example.webdev_hardware_store.model.Product
 import com.example.webdev_hardware_store.repository.ProductRepository
+import com.example.webdev_hardware_store.service.ProductService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
@@ -9,7 +11,10 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/products")
-class PublicProductController(private val productRepository: ProductRepository) {
+class PublicProductController(
+    private val productRepository: ProductRepository,
+    private val productService: ProductService
+) {
 
     @GetMapping
     fun getAll(
@@ -26,11 +31,11 @@ class PublicProductController(private val productRepository: ProductRepository) 
         }
     }
 
+    // Проксируем через ProductService, где живёт @Cacheable("product")
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: Long): ResponseEntity<Product> =
-        productRepository.findById(id)
-            .map { ResponseEntity.ok(it) }
-            .orElse(ResponseEntity.notFound().build())
+    fun getById(@PathVariable id: Long): ResponseEntity<ProductDto> =
+        try { ResponseEntity.ok(productService.findById(id)) }
+        catch (e: IllegalArgumentException) { ResponseEntity.notFound().build() }
 
     @GetMapping("/search")
     fun search(
