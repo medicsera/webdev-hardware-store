@@ -6,25 +6,28 @@ import com.example.webdev_hardware_store.model.Order
 import com.example.webdev_hardware_store.model.OrderItem
 import com.example.webdev_hardware_store.model.User
 import com.example.webdev_hardware_store.repository.OrderRepository
+import com.example.webdev_hardware_store.repository.ProductRepository
 import com.example.webdev_hardware_store.repository.UserRepository
+import jakarta.transaction.Transactional
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
 
 // ── Request / Response DTOs ────────────────────────────────────────────────
 
 data class CreateOrderItemDto(
     val productId: Long,
-    val name: String,
-    val price: Double,
-    val imageUrl: String?,
     val quantity: Int
 )
 
 data class CreateOrderDto(
     val items: List<CreateOrderItemDto>,
-    val deliveryCost: Double
+    val deliveryCost: Double,
+    val deliveryMethod: String? = null,
+    val deliveryAddress: String? = null
 )
 
 data class OrderItemResponse(
@@ -40,6 +43,8 @@ data class OrderResponse(
     val id: Long,
     val total: Double,
     val deliveryCost: Double,
+    val deliveryMethod: String,
+    val deliveryAddress: String?,
     val status: String,
     val createdAt: String,
     val items: List<OrderItemResponse>
@@ -52,6 +57,7 @@ data class OrderResponse(
 class BuyerController(
     private val userRepository: UserRepository,
     private val orderRepository: OrderRepository,
+    private val productRepository: ProductRepository,
     private val passwordEncoder: PasswordEncoder
 ) {
 
@@ -81,30 +87,58 @@ class BuyerController(
         return userRepository.save(updated)
     }
 
+    @Transactional
     @PostMapping("/orders")
     fun createOrder(
         @AuthenticationPrincipal principal: CustomUserDetails,
         @RequestBody dto: CreateOrderDto
     ): OrderResponse {
         val user = userRepository.findById(principal.id).orElseThrow()
-        val itemsTotal = dto.items.sumOf { it.price * it.quantity }
-        val total = itemsTotal + dto.deliveryCost
 
-        val order = Order(user = user, total = total.toBigDecimal(), deliveryCost = dto.deliveryCost.toBigDecimal())
-        val orderItems = dto.items.map { item ->
+        // Блокируем строки товаров (SELECT FOR UPDATE) и проверяем остаток.
+        // Сортировка по id исключает взаимную блокировку между параллельными транзакциями.
+        val lockedProducts = dto.items
+            .sortedBy { it.productId }
+            .map { item ->
+                val product = productRepository.findByIdForUpdate(item.productId)
+                    .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Товар #${item.productId} не найден") }
+
+                if (product.quantity < item.quantity) {
+                    throw ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Недостаточно товара «${product.name}»: в наличии ${product.quantity}, запрошено ${item.quantity}"
+                    )
+                }
+                item to product
+            }
+
+        // Уменьшаем остатки и считаем сумму по ценам из БД (не доверяем клиенту).
+        var itemsTotal = 0.0
+        val orderItems = lockedProducts.map { (item, product) ->
+            product.quantity -= item.quantity
+            productRepository.save(product)
+            itemsTotal += product.price * item.quantity
+
             OrderItem(
-                order       = order,
-                productId   = item.productId,
-                productName = item.name,
-                price       = item.price.toBigDecimal(),
+                productId   = product.id,
+                productName = product.name,
+                price       = product.price.toBigDecimal(),
                 quantity    = item.quantity,
-                imageUrl    = item.imageUrl
+                imageUrl    = product.imageUrls.firstOrNull()
             )
         }
+
+        val order = Order(
+            user            = user,
+            total           = (itemsTotal + dto.deliveryCost).toBigDecimal(),
+            deliveryCost    = dto.deliveryCost.toBigDecimal(),
+            deliveryMethod  = dto.deliveryMethod ?: "pickup",
+            deliveryAddress = dto.deliveryAddress
+        )
+        orderItems.forEach { it.order = order }
         order.items.addAll(orderItems)
 
-        val saved = orderRepository.save(order)
-        return toResponse(saved)
+        return toResponse(orderRepository.save(order))
     }
 
     @GetMapping("/orders")
@@ -112,12 +146,14 @@ class BuyerController(
         orderRepository.findByUserIdOrderByCreatedAtDesc(principal.id).map { toResponse(it) }
 
     private fun toResponse(order: Order) = OrderResponse(
-        id           = order.id,
-        total        = order.total.toDouble(),
-        deliveryCost = order.deliveryCost.toDouble(),
-        status       = order.status,
-        createdAt    = order.createdAt.toString(),
-        items        = order.items.map { item ->
+        id              = order.id,
+        total           = order.total.toDouble(),
+        deliveryCost    = order.deliveryCost.toDouble(),
+        deliveryMethod  = order.deliveryMethod,
+        deliveryAddress = order.deliveryAddress,
+        status          = order.status,
+        createdAt       = order.createdAt.toString(),
+        items           = order.items.map { item ->
             OrderItemResponse(
                 id        = item.id,
                 productId = item.productId,

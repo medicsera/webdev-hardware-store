@@ -22,6 +22,8 @@ data class AdminOrderDto(
     val id: Long,
     val total: Double,
     val deliveryCost: Double,
+    val deliveryMethod: String,
+    val deliveryAddress: String?,
     val status: String,
     val createdAt: String,
     val userEmail: String,
@@ -97,11 +99,13 @@ class AdminController(
     }
 
     private fun toAdminDto(order: com.example.webdev_hardware_store.model.Order) = AdminOrderDto(
-        id           = order.id,
-        total        = order.total.toDouble(),
-        deliveryCost = order.deliveryCost.toDouble(),
-        status       = order.status,
-        createdAt    = order.createdAt.toString(),
+        id              = order.id,
+        total           = order.total.toDouble(),
+        deliveryCost    = order.deliveryCost.toDouble(),
+        deliveryMethod  = order.deliveryMethod,
+        deliveryAddress = order.deliveryAddress,
+        status          = order.status,
+        createdAt       = order.createdAt.toString(),
         userEmail    = order.user.username,
         userFirstName = order.user.firstName,
         userLastName  = order.user.lastName,

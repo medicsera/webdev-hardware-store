@@ -79,9 +79,6 @@ const handleCheckout = async () => {
     await api.post('/buyer/orders', {
       items: cartItems.value.map(item => ({
         productId: item.id,
-        name: item.name,
-        price: item.price,
-        imageUrl: item.imageUrls?.[0] ?? null,
         quantity: item.cartQuantity
       })),
       deliveryMethod: deliveryMethod.value,

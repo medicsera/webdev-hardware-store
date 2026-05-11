@@ -20,6 +20,12 @@ class Order(
     @Column(name = "delivery_cost", nullable = false)
     val deliveryCost: BigDecimal,
 
+    @Column(name = "delivery_method", nullable = false)
+    val deliveryMethod: String = "pickup",
+
+    @Column(name = "delivery_address")
+    val deliveryAddress: String? = null,
+
     @Column(nullable = false)
     var status: String = "pending",
 
