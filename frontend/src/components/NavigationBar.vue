@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { useCatalogMenu } from '@/composables/useCatalogMenu'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
+import { productService } from '@/services/productApi'
+import type { Product } from '@/types/product'
 
 const router = useRouter()
 const { categories, loading, fetchCategoriesTree } = useCatalogMenu()
@@ -14,6 +16,64 @@ const catalogOpen = ref(false)
 const hoveredCategory = ref<number | null>(null)
 const catalogDropdownRef = ref<HTMLElement | null>(null)
 
+// ── search ──
+const searchQuery        = ref('')
+const searchResults      = ref<Product[]>([])
+const searchTotal        = ref(0)
+const searchLoading      = ref(false)
+const showDropdown       = ref(false)
+const searchContainerRef = ref<HTMLElement | null>(null)
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price)
+}
+
+function handleSearchInput() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  const q = searchQuery.value.trim()
+  if (q.length < 2) {
+    showDropdown.value = false
+    searchResults.value = []
+    return
+  }
+  debounceTimer = setTimeout(performSearch, 300)
+}
+
+async function performSearch() {
+  const q = searchQuery.value.trim()
+  if (q.length < 2) return
+  searchLoading.value = true
+  showDropdown.value = true
+  try {
+    const res = await productService.searchProducts(q, 0, 20)
+    searchResults.value = res.content
+    searchTotal.value = res.totalElements
+  } catch {
+    searchResults.value = []
+    searchTotal.value = 0
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+function navigateToSearch() {
+  const q = searchQuery.value.trim()
+  if (!q) return
+  showDropdown.value = false
+  router.push({ path: '/search', query: { q } })
+}
+
+function selectProduct(id: number) {
+  showDropdown.value = false
+  searchQuery.value = ''
+  router.push(`/product/${id}`)
+}
+
+function closeSearch() {
+  showDropdown.value = false
+}
+
 onMounted(() => {
   fetchCategoriesTree()
   document.addEventListener('click', handleClickOutside)
@@ -23,6 +83,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleEscape)
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 
 const toggleCatalog = (e: Event) => {
@@ -34,11 +95,15 @@ const handleClickOutside = (e: MouseEvent) => {
   if (catalogDropdownRef.value && !catalogDropdownRef.value.contains(e.target as Node)) {
     catalogOpen.value = false
   }
+  if (searchContainerRef.value && !searchContainerRef.value.contains(e.target as Node)) {
+    showDropdown.value = false
+  }
 }
 
 const handleEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     catalogOpen.value = false
+    showDropdown.value = false
   }
 }
 
@@ -80,9 +145,50 @@ const handleLogout = () => {
         <img src="@/assets/catalog-icon.svg" alt="" />
         <span class="catalog-label">Каталог</span>
       </button>
-      <div class="search">
-        <input id="search" class="search-input" placeholder="Поиск товара" type="text"/>
-        <img src="@/assets/search-icon.svg" alt="" class="search-icon"/>
+      <div class="search" ref="searchContainerRef">
+        <input
+          class="search-input"
+          placeholder="Поиск товара"
+          type="text"
+          v-model="searchQuery"
+          @input="handleSearchInput"
+          @keydown.enter.prevent="navigateToSearch"
+          @keydown.escape="closeSearch"
+          @focus="if (searchResults.length > 0) showDropdown = true"
+          autocomplete="off"
+        />
+        <img src="@/assets/search-icon.svg" alt="" class="search-icon" @click="navigateToSearch" />
+
+        <!-- Search dropdown -->
+        <transition name="search-fade">
+          <div v-if="showDropdown" class="search-dropdown">
+            <div v-if="searchLoading" class="search-dropdown__loading">
+              <span class="search-spinner"></span> Поиск...
+            </div>
+            <template v-else-if="searchResults.length > 0">
+              <div
+                v-for="product in searchResults.slice(0, 6)"
+                :key="product.id"
+                class="search-result"
+                @click="selectProduct(product.id)"
+              >
+                <img
+                  :src="product.imageUrls?.[0] || '/placeholder-product.jpg'"
+                  class="search-result__img"
+                  alt=""
+                />
+                <div class="search-result__info">
+                  <span class="search-result__name">{{ product.name }}</span>
+                  <span class="search-result__price">{{ formatPrice(product.price) }}</span>
+                </div>
+              </div>
+              <div v-if="searchTotal > 6" class="search-dropdown__footer" @click="navigateToSearch">
+                Показать все результаты ({{ searchTotal }}) →
+              </div>
+            </template>
+            <div v-else class="search-dropdown__empty">Ничего не найдено</div>
+          </div>
+        </transition>
       </div>
       <div class="contacts">
         <div class="contacts-div">
@@ -345,6 +451,7 @@ const handleLogout = () => {
   height: 90%;
   border-radius: 10px;
   background-color: $light-grey-color;
+  position: relative;
 
   &-input {
     font-size: $default-size;
@@ -357,9 +464,118 @@ const handleLogout = () => {
 
   &-icon {
     margin-right: 10px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+    &:hover { opacity: 1; }
+  }
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  overflow: hidden;
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #888;
   }
 
+  &__empty {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #aaa;
+    text-align: center;
+  }
+
+  &__footer {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f4b942;
+    border-top: 1px solid #f0f0f0;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s;
+
+    &:hover { background: #fffbf0; }
+  }
 }
+
+.search-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid #f5f5f5;
+  &:last-of-type { border-bottom: none; }
+
+  &:hover { background: #f9f9f9; }
+
+  &__img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__price {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f4b942;
+  }
+}
+
+.search-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ddd;
+  border-top-color: #f4b942;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.search-fade-enter-active,
+.search-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
+.search-fade-enter-from,
+.search-fade-leave-to    { opacity: 0; transform: translateY(-4px); }
 .contacts {
   width: 180px;
   height: 100%;

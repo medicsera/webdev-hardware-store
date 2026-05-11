@@ -11,4 +11,5 @@ interface ProductRepository : JpaRepository<Product, Long> {
     fun findByCatalogId(catalogId: Long, pageable: Pageable): Page<Product>
     fun findBySubCatalogId(subCatalogId: Long, pageable: Pageable): Page<Product>
     fun countByCatalogId(catalogId: Long): Long
+    fun findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(name: String, description: String, pageable: Pageable): Page<Product>
 }

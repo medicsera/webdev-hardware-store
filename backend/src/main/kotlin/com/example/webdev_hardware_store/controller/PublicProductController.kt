@@ -36,14 +36,9 @@ class PublicProductController(private val productRepository: ProductRepository) 
     fun search(
         @RequestParam q: String,
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "10") size: Int
+        @RequestParam(defaultValue = "20") size: Int
     ): Page<Product> {
         val pageable = PageRequest.of(page, size)
-        return productRepository.findAll(pageable).let { all ->
-            val filtered = all.content.filter {
-                it.name.contains(q, ignoreCase = true) || it.description.contains(q, ignoreCase = true)
-            }
-            org.springframework.data.domain.PageImpl(filtered, pageable, filtered.size.toLong())
-        }
+        return productRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(q, q, pageable)
     }
 }
