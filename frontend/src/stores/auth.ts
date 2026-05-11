@@ -1,144 +1,110 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import api from '@/api/auth'
+import { jwtDecode } from 'jwt-decode'
 
 export interface User {
-  id: number
-  firstName: string
-  lastName: string
-  phone: string
-  email: string
-  role: string
+    id: number
+    firstName: string
+    lastName: string
+    phone: string
+    email: string
+    role: string
 }
 
-const USERS_STORAGE_KEY = 'app_users'
-const SESSION_STORAGE_KEY = 'app_session'
+const TOKEN_KEY = 'auth_token'
 
-function getUsers(): Record<string, { user: User; password: string }> {
-  const raw = localStorage.getItem(USERS_STORAGE_KEY)
-  if (!raw) return {}
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return {}
-  }
+function applyToken(token: string) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
 }
 
-function saveUsers(users: Record<string, { user: User; password: string }>) {
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users))
-}
-
-function getSession(): { email: string; password: string } | null {
-  const raw = sessionStorage.getItem(SESSION_STORAGE_KEY)
-  if (!raw) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
-}
-
-function saveSession(email: string, password: string) {
-  sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ email, password }))
-}
-
-function clearSession() {
-  sessionStorage.removeItem(SESSION_STORAGE_KEY)
+function clearToken() {
+    localStorage.removeItem(TOKEN_KEY)
+    delete api.defaults.headers.common['Authorization']
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const currentUser = ref<User | null>(null)
-  const isAuthenticated = computed(() => currentUser.value !== null)
+    const currentUser = ref<User | null>(null)
+    const isAuthenticated = computed(() => !!currentUser.value)
 
-  function init() {
-    const session = getSession()
-    if (!session) return
-
-    const users = getUsers()
-    const record = users[session.email.toLowerCase()]
-    if (record && record.password === session.password) {
-      currentUser.value = { ...record.user }
-    }
-  }
-
-  init()
-
-  function login(email: string, password: string): { success: boolean; error?: string } {
-    const normalizedEmail = email.toLowerCase().trim()
-
-    const users = getUsers()
-    const record = users[normalizedEmail]
-
-    if (!record) {
-      return { success: false, error: 'Пользователь не найден' }
+    function setUserFromToken(token: string) {
+        try {
+            const payload: any = jwtDecode(token)
+            currentUser.value = {
+                id: payload.id,
+                firstName: payload.firstName ?? '',
+                lastName: payload.lastName ?? '',
+                phone: payload.phone ?? '',
+                email: payload.sub,
+                role: payload.role,
+            }
+            applyToken(token)
+        } catch (e) {
+            console.error('Invalid token', e)
+        }
     }
 
-    if (record.password !== password) {
-      return { success: false, error: 'Неверный пароль' }
+    function init() {
+        const token = localStorage.getItem(TOKEN_KEY)
+        if (token) setUserFromToken(token)
     }
 
-    currentUser.value = { ...record.user }
-    saveSession(normalizedEmail, password)
-    return { success: true }
-  }
+    init()
 
-  function register(
-    firstName: string,
-    lastName: string,
-    phone: string,
-    email: string,
-    password: string
-  ): { success: boolean; error?: string } {
-    const normalizedEmail = email.toLowerCase().trim()
-    const users = getUsers()
-
-    if (users[normalizedEmail]) {
-      return { success: false, error: 'Пользователь с такой почтой уже существует' }
+    async function login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const resp = await api.post('/auth/login', { username: email, password })
+            const token = resp.data.token
+            localStorage.setItem(TOKEN_KEY, token)
+            setUserFromToken(token)
+            return { success: true }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message ?? 'Ошибка входа'
+            return { success: false, error: msg }
+        }
     }
 
-    const newUser: User = {
-      id: Date.now(),
-      firstName,
-      lastName,
-      phone,
-      email: normalizedEmail,
-      role: 'user'
+    async function register(
+        firstName: string,
+        lastName: string,
+         phone: string,
+        email: string,
+        password: string
+    ): Promise<{ success: boolean; error?: string }> {
+        try {
+            const resp = await api.post('/auth/register', { username: email, password, firstName, lastName, phone })
+            const token = resp.data.token
+            localStorage.setItem(TOKEN_KEY, token)
+            setUserFromToken(token)
+            return { success: true }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message ?? 'Ошибка регистрации'
+            return { success: false, error: msg }
+        }
     }
 
-    users[normalizedEmail] = { user: newUser, password }
-    saveUsers(users)
-
-    currentUser.value = { ...newUser }
-    saveSession(normalizedEmail, password)
-    return { success: true }
-  }
-
-  function logout() {
-    currentUser.value = null
-    clearSession()
-  }
-
-  function updateProfile(data: { firstName: string; lastName: string; phone: string; email: string }) {
-    if (!currentUser.value) return
-
-    const session = getSession()
-    if (!session) return
-
-    const users = getUsers()
-    const record = users[session.email.toLowerCase()]
-    if (!record) return
-
-    currentUser.value = {
-      ...currentUser.value,
-      ...data
+    function logout() {
+        currentUser.value = null
+        clearToken()
     }
 
-    record.user = {
-      ...record.user,
-      ...data
+    async function updateProfile(data: { firstName?: string; lastName?: string; phone?: string; address?: string; email?: string; password?: string }) {
+        if (!currentUser.value) return
+        try {
+            const token = localStorage.getItem(TOKEN_KEY) ?? ''
+            await api.put('/buyer/profile', data, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            currentUser.value = {
+                ...currentUser.value,
+                firstName: data.firstName ?? currentUser.value.firstName,
+                lastName: data.lastName ?? currentUser.value.lastName,
+                phone: data.phone ?? currentUser.value.phone,
+            }
+        } catch (e) {
+            console.error('Profile update failed', e)
+        }
     }
 
-    saveUsers(users)
-  }
-
-  return { currentUser, isAuthenticated, init, login, register, logout, updateProfile }
+    return { currentUser, isAuthenticated, login, register, logout, updateProfile }
 })

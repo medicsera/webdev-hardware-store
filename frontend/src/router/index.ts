@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router"
 import type { RouteRecordRaw } from "vue-router"
+// lazy‑load AdminDashboard to avoid TS import error
+import { useAuthStore } from '@/stores/auth'
+
 
 const routes: RouteRecordRaw[] = [
     {
@@ -56,6 +59,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/ProfileView.vue'),
         meta: { title: "Профиль" }
     },
+    {
+        path: '/admin',
+        component: () => import('@/views/AdminDashboard.vue'),
+        meta: { requiresAdmin: true },
+    },
 ]
 
 const router = createRouter({
@@ -66,8 +74,12 @@ const router = createRouter({
     }
 })
 
-router.beforeEach((to, _from) => {
-    document.title = `${to.meta.title || 'Factura Shop'} | Factura Shop`
+router.beforeEach((to, _from, next) => {
+    const store = useAuthStore()
+    if (to.meta.requiresAdmin && store.currentUser?.role !== 'ADMIN') {
+        // non‑admin users are sent back to home
+        return next('/')
+    }
+    next()
 })
-
 export default router

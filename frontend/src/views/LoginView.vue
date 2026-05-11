@@ -11,20 +11,11 @@ const password = ref('')
 const isLoading = ref(false)
 const error = ref('')
 
-const validateEmail = (value: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-}
-
 const handleSubmit = async () => {
   error.value = ''
 
   if (!email.value.trim()) {
     error.value = 'Введите почту'
-    return
-  }
-
-  if (!validateEmail(email.value)) {
-    error.value = 'Введите корректный адрес почты'
     return
   }
 
@@ -35,9 +26,7 @@ const handleSubmit = async () => {
 
   isLoading.value = true
 
-  await new Promise(r => setTimeout(r, 500))
-
-  const result = authStore.login(email.value, password.value)
+  const result = await authStore.login(email.value.trim(), password.value)
 
   isLoading.value = false
 

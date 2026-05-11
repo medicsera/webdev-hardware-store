@@ -21,13 +21,19 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: path.resolve(__dirname, '../backend/src/main/resources/static'),
+    outDir: 'dist',
     emptyOutDir: true
   },
     server: {
       port: 5173,
       proxy: {
           '/api': {
+              target: 'http://localhost:8080',
+              changeOrigin: true,
+              secure: false,
+              rewrite: (path: string) => path.replace(/^\/api/, '')
+          },
+          '/uploads': {
               target: 'http://localhost:8080',
               changeOrigin: true,
               secure: false

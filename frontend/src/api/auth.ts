@@ -1,26 +1,47 @@
+import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 
-const api = axios.create({
-    baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8080',
+const api: AxiosInstance = axios.create({
+    baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8080',
 });
 
-// Store token in localStorage after login
-export function setAuthToken(token) {
-    localStorage.setItem('jwt', token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+// Inject Authorization on every request — works for JSON, FormData, and any content type
+api.interceptors.request.use(config => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+});
+
+export function setAuthToken(token: string): void {
+    localStorage.setItem('auth_token', token);
 }
 
-// Load token on app start
-const saved = localStorage.getItem('jwt');
-if (saved) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${saved}`;
+export function loadStoredToken(): void {
+    // No-op: interceptor reads from localStorage on every request
 }
 
-// Simple login helper
-export async function login(username, password) {
-    const { data } = await api.post('/auth/login', { username, password });
+export async function login(username: string, password: string): Promise<string> {
+    const { data } = await api.post<{ token: string }>('/auth/login', {
+        username,
+        password,
+    });
     setAuthToken(data.token);
-    return data;
+    return data.token;
+}
+
+export async function register(username: string, password: string): Promise<string> {
+    const { data } = await api.post<{ token: string }>('/auth/register', {
+        username,
+        password,
+    });
+    setAuthToken(data.token);
+    return data.token;
+}
+
+export function logout(): void {
+    localStorage.removeItem('jwt');
 }
 
 export default api;
