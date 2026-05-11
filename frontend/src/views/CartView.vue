@@ -9,11 +9,16 @@ const router = useRouter()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
 
-const loading     = ref(true)
+const loading      = ref(true)
 const isSubmitting = ref(false)
 
 const deliveryCost          = 350
 const freeDeliveryThreshold = 5000
+
+type DeliveryMethod = 'pickup' | 'delivery'
+const deliveryMethod  = ref<DeliveryMethod>('pickup')
+const deliveryAddress = ref('')
+const addressError    = ref(false)
 
 const cartItems = computed(() => cartStore.items)
 
@@ -21,13 +26,20 @@ const subtotal = computed(() =>
   cartItems.value.reduce((sum, item) => sum + item.price * item.cartQuantity, 0)
 )
 
-const isFreeDelivery = computed(() => subtotal.value >= freeDeliveryThreshold)
-const delivery = computed(() => cartItems.value.length > 0 ? (isFreeDelivery.value ? 0 : deliveryCost) : 0)
-const total    = computed(() => subtotal.value + delivery.value)
+const isDelivery     = computed(() => deliveryMethod.value === 'delivery')
+const isFreeDelivery = computed(() => isDelivery.value && subtotal.value >= freeDeliveryThreshold)
+const delivery = computed(() => {
+  if (!isDelivery.value || cartItems.value.length === 0) return 0
+  return isFreeDelivery.value ? 0 : deliveryCost
+})
+const total = computed(() => subtotal.value + delivery.value)
 
 const formattedSubtotal = computed(() => formatPrice(subtotal.value))
-const formattedDelivery = computed(() => isFreeDelivery.value ? 'Бесплатно' : formatPrice(delivery.value))
-const formattedTotal    = computed(() => formatPrice(total.value))
+const formattedDelivery = computed(() => {
+  if (!isDelivery.value) return 'Самовывоз'
+  return isFreeDelivery.value ? 'Бесплатно' : formatPrice(delivery.value)
+})
+const formattedTotal = computed(() => formatPrice(total.value))
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2 }).format(price)
@@ -56,6 +68,12 @@ function removeItem(item: CartItem) {
 
 const handleCheckout = async () => {
   if (isSubmitting.value || cartItems.value.length === 0) return
+
+  if (isDelivery.value && !deliveryAddress.value.trim()) {
+    addressError.value = true
+    return
+  }
+
   isSubmitting.value = true
   try {
     await api.post('/buyer/orders', {
@@ -66,6 +84,8 @@ const handleCheckout = async () => {
         imageUrl: item.imageUrls?.[0] ?? null,
         quantity: item.cartQuantity
       })),
+      deliveryMethod: deliveryMethod.value,
+      deliveryAddress: isDelivery.value ? `г. Саяногорск, ${deliveryAddress.value.trim()}` : null,
       deliveryCost: delivery.value
     })
     cartStore.clearCart()
@@ -166,6 +186,53 @@ onMounted(() => { loading.value = false })
         <div class="cart-summary">
           <h3 class="cart-summary__title">Итого</h3>
 
+          <!-- Способ получения -->
+          <div class="delivery-method">
+            <p class="delivery-method__label">Способ получения</p>
+            <label class="delivery-method__option" :class="{ 'delivery-method__option--active': deliveryMethod === 'pickup' }">
+              <input type="radio" v-model="deliveryMethod" value="pickup" />
+              <span class="delivery-method__icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6C3.5 9.5 8 14.5 8 14.5C8 14.5 12.5 9.5 12.5 6C12.5 3.5 10.5 1.5 8 1.5ZM8 7.5C7.17 7.5 6.5 6.83 6.5 6C6.5 5.17 7.17 4.5 8 4.5C8.83 4.5 9.5 5.17 9.5 6C9.5 6.83 8.83 7.5 8 7.5Z" fill="currentColor"/>
+                </svg>
+              </span>
+              <span class="delivery-method__text">
+                <strong>Самовывоз</strong>
+                <small>г. Саяногорск, Ленинградский микрорайон, 26/1 н</small>
+              </span>
+            </label>
+            <label class="delivery-method__option" :class="{ 'delivery-method__option--active': deliveryMethod === 'delivery' }">
+              <input type="radio" v-model="deliveryMethod" value="delivery" />
+              <span class="delivery-method__icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 4H10V11H1V4Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+                  <path d="M10 6L13 6L15 8.5V11H10V6Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+                  <circle cx="3.5" cy="12.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                  <circle cx="12.5" cy="12.5" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+              </span>
+              <span class="delivery-method__text">
+                <strong>Доставка по городу</strong>
+                <small>{{ subtotal >= freeDeliveryThreshold ? 'Бесплатно' : `${deliveryCost} ₽` }} · г. Саяногорск</small>
+              </span>
+            </label>
+
+            <div v-if="deliveryMethod === 'delivery'" class="delivery-address">
+              <label class="delivery-address__label" for="address">Адрес доставки</label>
+              <div class="delivery-address__prefix">г. Саяногорск,</div>
+              <input
+                id="address"
+                type="text"
+                class="delivery-address__input"
+                :class="{ 'delivery-address__input--error': addressError }"
+                v-model="deliveryAddress"
+                placeholder="ул. Примерная, д. 1, кв. 10"
+                @input="addressError = false"
+              />
+              <p v-if="addressError" class="delivery-address__error">Укажите адрес доставки</p>
+            </div>
+          </div>
+
           <div class="cart-summary__row">
             <span>Товары ({{ cartItems.length }})</span>
             <span>{{ formattedSubtotal }}</span>
@@ -173,10 +240,10 @@ onMounted(() => { loading.value = false })
 
           <div class="cart-summary__row">
             <span>Доставка</span>
-            <span :class="{ 'cart-summary__free': isFreeDelivery }">{{ formattedDelivery }}</span>
+            <span :class="{ 'cart-summary__free': isFreeDelivery || !isDelivery }">{{ formattedDelivery }}</span>
           </div>
 
-          <div v-if="!isFreeDelivery && cartItems.length > 0" class="cart-summary__hint">
+          <div v-if="isDelivery && !isFreeDelivery && cartItems.length > 0" class="cart-summary__hint">
             До бесплатной доставки ещё {{ formatPrice(freeDeliveryThreshold - subtotal) }}
           </div>
 
@@ -494,6 +561,101 @@ onMounted(() => { loading.value = false })
   &:hover:not(:disabled) { background: #e0a830; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
   &--submitting { background: #42b983; color: white; }
+}
+
+.delivery-method {
+  margin-bottom: 16px;
+
+  &__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+  }
+
+  &__option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: border-color 0.2s, background 0.2s;
+
+    input[type='radio'] { display: none; }
+
+    &--active {
+      border-color: #f4b942;
+      background: #fdf8ee;
+    }
+
+    &:hover:not(&--active) { border-color: #ccc; }
+  }
+
+  &__icon {
+    color: #888;
+    flex-shrink: 0;
+    margin-top: 2px;
+
+    .delivery-method__option--active & { color: #e0a830; }
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    strong { font-size: 13px; color: #2c3e50; font-weight: 600; }
+    small  { font-size: 11px; color: #999; }
+  }
+}
+
+.delivery-address {
+  margin-top: 4px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+
+  &__label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  &__prefix {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 13px;
+    color: #2c3e50;
+    background: white;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus { border-color: #f4b942; }
+    &--error { border-color: #e74c3c; }
+    &::placeholder { color: #bbb; }
+  }
+
+  &__error {
+    font-size: 11px;
+    color: #e74c3c;
+    margin: 4px 0 0;
+  }
 }
 
 @media (max-width: 768px) {

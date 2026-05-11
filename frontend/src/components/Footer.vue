@@ -50,9 +50,10 @@
         <div class="footer-column">
           <h3 class="footer-title">Адрес</h3>
           <div class="footer-address">
-            <p>Микрорайон Ленинградский, 26Б,</p>
+            <p>Ленинградский микрорайон, 26/1 н,</p>
             <p>Саяногорск, Республика Хакасия</p>
-            <p class="footer-hours">Ежедневно с 9:00 до 18:00</p>
+            <p class="footer-hours">Пн-пт с 9:00 до 19:00</p>
+            <p class="footer-hours">Сб-вс с 9:00 до 18:00</p>
           </div>
         </div>
       </div>
