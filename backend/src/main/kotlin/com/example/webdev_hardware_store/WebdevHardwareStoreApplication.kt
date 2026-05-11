@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class WebdevHardwareStoreApplication
 
 fun main(args: Array<String>) {
-	runApplication<WebdevHardwareStoreApplication>(*args)
+    runApplication<WebdevHardwareStoreApplication>(*args)
 }

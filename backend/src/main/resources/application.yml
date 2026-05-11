@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: webdev-hardware-store
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hardware_store
+    username: ${DB_USER}
+    password: ${DB_PASS}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+app:
+  upload-dir: ${APP_UPLOAD_DIR:./uploads}
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: DEBUG

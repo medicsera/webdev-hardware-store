@@ -12,12 +12,13 @@ data class User(
     val username: String,
 
     @Column(nullable = false)
-    val password: String,          // BCrypt‑encoded
+    val password: String,
 
     @Column(nullable = false)
-    val role: String,              // "ADMIN" or "BUYER"
+    val role: String,
 
-    // buyer‑only fields
+    var firstName: String? = null,
+    var lastName: String? = null,
     var address: String? = null,
     var phone: String? = null
 )
