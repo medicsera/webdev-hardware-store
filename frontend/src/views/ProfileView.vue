@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import PersonalDataForm from '@/components/PersonalDataForm.vue'
 import OrderHistory from '@/components/OrderHistory.vue'
+import AdminDashboard from '@/views/AdminDashboard.vue'
 
 type Tab = 'personal' | 'orders'
+
+const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.currentUser?.role === 'ADMIN')
 
 const activeTab = ref<Tab>('personal')
 </script>
 
 <template>
-  <main class="profile-page">
+  <AdminDashboard v-if="isAdmin" />
+  <main v-else class="profile-page">
     <div class="container">
       <div class="profile-layout">
         <!-- Sidebar -->

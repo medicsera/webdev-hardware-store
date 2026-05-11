@@ -67,12 +67,18 @@ const handleSubmit = async () => {
 
   await new Promise(r => setTimeout(r, 500))
 
-  authStore.updateProfile({
+  await authStore.updateProfile({
     firstName: form.value.firstName,
     lastName: form.value.lastName,
     phone: form.value.phone,
-    email: form.value.email
+    email: form.value.email,
+    ...(form.value.password ? { password: form.value.password } : {})
   })
+
+  if (form.value.password) {
+    form.value.password = ''
+    editingPassword.value = false
+  }
 
   isSaving.value = false
   savedMessage.value = 'Данные сохранены'
