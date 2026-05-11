@@ -6,6 +6,7 @@ import com.example.webdev_hardware_store.service.ImageUploadService
 import com.example.webdev_hardware_store.service.ProductService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
@@ -87,12 +88,13 @@ class AdminController(
     fun listOrders(): List<AdminOrderDto> =
         orderRepository.findAllWithUserOrderByCreatedAtDesc().map { toAdminDto(it) }
 
+    @Transactional
     @PatchMapping("/orders/{id}/status")
     fun updateOrderStatus(
         @PathVariable id: Long,
         @RequestBody body: Map<String, String>
     ): AdminOrderDto {
-        val order = orderRepository.findById(id).orElseThrow { IllegalArgumentException("Order not found") }
+        val order = orderRepository.findByIdWithUser(id).orElseThrow { IllegalArgumentException("Order not found") }
         val newStatus = body["status"] ?: throw IllegalArgumentException("status required")
         order.status = newStatus
         return toAdminDto(orderRepository.save(order))

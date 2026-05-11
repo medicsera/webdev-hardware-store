@@ -1,6 +1,9 @@
 package com.example.webdev_hardware_store.config
 
+import org.springframework.cache.annotation.CachingConfigurer
 import org.springframework.cache.annotation.EnableCaching
+import org.springframework.cache.interceptor.CacheErrorHandler
+import org.springframework.cache.interceptor.SimpleCacheErrorHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.cache.RedisCacheConfiguration
@@ -13,7 +16,7 @@ import java.time.Duration
 
 @Configuration
 @EnableCaching
-class RedisConfig {
+class RedisConfig : CachingConfigurer {
 
     private fun cacheConfig(ttl: Duration): RedisCacheConfiguration =
         RedisCacheConfiguration.defaultCacheConfig()
@@ -38,4 +41,7 @@ class RedisConfig {
             )
             .transactionAware()
             .build()
+
+    // При недоступном Redis — логируем и идём в БД, не бросаем 500
+    override fun errorHandler(): CacheErrorHandler = SimpleCacheErrorHandler()
 }
