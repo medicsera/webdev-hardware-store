@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hardware-store-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build: .
+    container_name: hardware-store-backend
+    environment:
+      - JWT_SECRET=ChangeMeInProd123
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/hardware_store
+      - SPRING_DATASOURCE_USERNAME=store_user
+      - SPRING_DATASOURCE_PASSWORD=store_pass
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=8080
+      - APP_UPLOAD_DIR=/app/uploads
+    volumes:
+      - uploads-data:/app/uploads
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: hardware-store-db
+    environment:
+      POSTGRES_DB: hardware_store
+      POSTGRES_USER: store_user
+      POSTGRES_PASSWORD: store_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  uploads-data:
