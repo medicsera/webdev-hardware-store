@@ -1,6 +1,7 @@
 package com.example.webdev_hardware_store.controller
 
 import com.example.webdev_hardware_store.dto.ProductDto
+import com.example.webdev_hardware_store.repository.OrderRepository
 import com.example.webdev_hardware_store.service.ImageUploadService
 import com.example.webdev_hardware_store.service.ProductService
 import org.springframework.http.MediaType
@@ -8,11 +9,34 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
+data class AdminOrderItemDto(
+    val id: Long,
+    val productId: Long,
+    val name: String,
+    val price: Double,
+    val quantity: Int,
+    val imageUrl: String?
+)
+
+data class AdminOrderDto(
+    val id: Long,
+    val total: Double,
+    val deliveryCost: Double,
+    val status: String,
+    val createdAt: String,
+    val userEmail: String,
+    val userFirstName: String?,
+    val userLastName: String?,
+    val userPhone: String?,
+    val items: List<AdminOrderItemDto>
+)
+
 @RestController
 @RequestMapping("/admin")
 class AdminController(
     private val productService: ProductService,
-    private val imageUploadService: ImageUploadService
+    private val imageUploadService: ImageUploadService,
+    private val orderRepository: OrderRepository
 ) {
 
     @GetMapping("/products")
@@ -54,4 +78,43 @@ class AdminController(
         productService.delete(id)
         return ResponseEntity.noContent().build()
     }
+
+    // ── Orders ──────────────────────────────────────────────────────────────
+
+    @GetMapping("/orders")
+    fun listOrders(): List<AdminOrderDto> =
+        orderRepository.findAllWithUserOrderByCreatedAtDesc().map { toAdminDto(it) }
+
+    @PatchMapping("/orders/{id}/status")
+    fun updateOrderStatus(
+        @PathVariable id: Long,
+        @RequestBody body: Map<String, String>
+    ): AdminOrderDto {
+        val order = orderRepository.findById(id).orElseThrow { IllegalArgumentException("Order not found") }
+        val newStatus = body["status"] ?: throw IllegalArgumentException("status required")
+        order.status = newStatus
+        return toAdminDto(orderRepository.save(order))
+    }
+
+    private fun toAdminDto(order: com.example.webdev_hardware_store.model.Order) = AdminOrderDto(
+        id           = order.id,
+        total        = order.total.toDouble(),
+        deliveryCost = order.deliveryCost.toDouble(),
+        status       = order.status,
+        createdAt    = order.createdAt.toString(),
+        userEmail    = order.user.username,
+        userFirstName = order.user.firstName,
+        userLastName  = order.user.lastName,
+        userPhone     = order.user.phone,
+        items        = order.items.map { item ->
+            AdminOrderItemDto(
+                id        = item.id,
+                productId = item.productId,
+                name      = item.productName,
+                price     = item.price.toDouble(),
+                quantity  = item.quantity,
+                imageUrl  = item.imageUrl
+            )
+        }
+    )
 }

@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  addToCart: [product: Product]
+  addToCart: [product: Product, quantity: number]
   quantityChange: [productId: number, quantity: number]
 }>()
 
@@ -48,15 +48,23 @@ const productName = computed(() => {
   return props.product?.name || 'Загрузка...'
 })
 
+const maxStock = computed(() => props.product?.quantity ?? Infinity)
+
+const clampQuantity = () => {
+  if (!Number.isInteger(quantity.value) || quantity.value < 1) quantity.value = 1
+  else if (quantity.value > maxStock.value) quantity.value = maxStock.value as number
+}
+
 const handleAddToCart = () => {
   if (!props.product || isAdding.value) return
+  clampQuantity()
   isAdding.value = true
-  emit('addToCart', props.product)
+  emit('addToCart', props.product, quantity.value)
   setTimeout(() => { isAdding.value = false }, 2000)
 }
 
 const increment = () => {
-  if (!props.product) return
+  if (!props.product || quantity.value >= maxStock.value) return
   quantity.value++
   emit('quantityChange', props.product.id, quantity.value)
 }
@@ -132,10 +140,18 @@ const decrement = () => {
           >
             −
           </button>
-          <span class="quantity-value">{{ quantity }} шт.</span>
+          <input
+              type="number"
+              class="quantity-input"
+              v-model.number="quantity"
+              min="1"
+              @blur="clampQuantity"
+              @keydown.enter.prevent="clampQuantity"
+          />
           <button
               class="quantity-btn quantity-btn--plus"
               @click="increment"
+              :disabled="quantity >= maxStock"
           >
             +
           </button>
@@ -334,10 +350,22 @@ const decrement = () => {
   }
 }
 
-.quantity-value {
+.quantity-input {
   font-weight: 500;
-  min-width: 50px;
+  width: 44px;
   text-align: center;
+  border: none;
+  background: transparent;
+  outline: none;
+  -moz-appearance: textfield;
+  font-size: 0.875rem;
+  color: #555;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 .skeleton {

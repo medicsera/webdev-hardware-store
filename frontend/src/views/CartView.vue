@@ -2,9 +2,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore, type CartItem } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/api/auth'
 
 const router = useRouter()
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 
 const loading     = ref(true)
 const isSubmitting = ref(false)
@@ -31,12 +34,20 @@ function formatPrice(price: number): string {
 }
 
 function incrementQuantity(item: CartItem) {
+  if (item.cartQuantity >= item.stock) return
   cartStore.updateQuantity(item.id, item.cartQuantity + 1)
 }
 
 function decrementQuantity(item: CartItem) {
   if (item.cartQuantity <= 1) return
   cartStore.updateQuantity(item.id, item.cartQuantity - 1)
+}
+
+function updateQuantityFromInput(item: CartItem, event: Event) {
+  const val = parseInt((event.target as HTMLInputElement).value)
+  const clamped = isNaN(val) || val < 1 ? 1 : Math.min(val, item.stock)
+  cartStore.updateQuantity(item.id, clamped)
+  ;(event.target as HTMLInputElement).value = String(clamped)
 }
 
 function removeItem(item: CartItem) {
@@ -47,10 +58,20 @@ const handleCheckout = async () => {
   if (isSubmitting.value || cartItems.value.length === 0) return
   isSubmitting.value = true
   try {
-    await new Promise(r => setTimeout(r, 1000))
+    await api.post('/buyer/orders', {
+      items: cartItems.value.map(item => ({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        imageUrl: item.imageUrls?.[0] ?? null,
+        quantity: item.cartQuantity
+      })),
+      deliveryCost: delivery.value
+    })
     cartStore.clearCart()
-    router.push('/')
-  } catch {
+    router.push('/profile')
+  } catch (err) {
+    console.error('Checkout failed', err)
     isSubmitting.value = false
   }
 }
@@ -111,8 +132,16 @@ onMounted(() => { loading.value = false })
 
             <div class="cart-item__quantity">
               <button class="quantity-btn quantity-btn--minus" @click="decrementQuantity(item)" :disabled="item.cartQuantity <= 1">−</button>
-              <span class="quantity-value">{{ item.cartQuantity }}</span>
-              <button class="quantity-btn quantity-btn--plus" @click="incrementQuantity(item)">+</button>
+              <input
+                type="number"
+                class="quantity-input"
+                :value="item.cartQuantity"
+                min="1"
+                :max="item.stock"
+                @change="updateQuantityFromInput(item, $event)"
+                @blur="updateQuantityFromInput(item, $event)"
+              />
+              <button class="quantity-btn quantity-btn--plus" @click="incrementQuantity(item)" :disabled="item.cartQuantity >= item.stock">+</button>
             </div>
 
             <div class="cart-item__price">
@@ -158,7 +187,16 @@ onMounted(() => { loading.value = false })
             <span>{{ formattedTotal }}</span>
           </div>
 
+          <div v-if="!authStore.isAuthenticated" class="cart-auth-prompt">
+            <p class="cart-auth-prompt__text">Чтобы оформить заказ:</p>
+            <div class="cart-auth-prompt__links">
+              <router-link to="/login" class="cart-auth-prompt__btn cart-auth-prompt__btn--login">Войти</router-link>
+              <span class="cart-auth-prompt__or">или</span>
+              <router-link to="/register" class="cart-auth-prompt__btn cart-auth-prompt__btn--register">Зарегистрироваться</router-link>
+            </div>
+          </div>
           <button
+            v-else
             class="btn-checkout"
             :class="{ 'btn-checkout--submitting': isSubmitting }"
             :disabled="isSubmitting || cartItems.length === 0"
@@ -338,7 +376,23 @@ onMounted(() => { loading.value = false })
   &--plus  { color: #27ae60; }
 }
 
-.quantity-value { font-size: 12px; font-weight: 500; min-width: 36px; text-align: center; color: #555; }
+.quantity-input {
+  font-size: 12px;
+  font-weight: 500;
+  width: 40px;
+  text-align: center;
+  color: #555;
+  border: none;
+  background: transparent;
+  outline: none;
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
 
 .cart-summary {
   width: 280px;
@@ -373,6 +427,56 @@ onMounted(() => { loading.value = false })
   }
 
   &__divider { height: 1px; background: #eee; margin: 12px 0; }
+}
+
+.cart-auth-prompt {
+  margin-top: 16px;
+  padding: 14px;
+  background: #fdf8ee;
+  border: 1px solid #f4b942;
+  border-radius: 6px;
+  text-align: center;
+
+  &__text {
+    font-size: 13px;
+    color: #555;
+    margin: 0 0 10px;
+  }
+
+  &__links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__or {
+    font-size: 13px;
+    color: #aaa;
+  }
+
+  &__btn {
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 5px;
+    transition: all 0.2s;
+
+    &--login {
+      background: #f4b942;
+      color: #2c3e50;
+      &:hover { background: #e0a830; }
+    }
+
+    &--register {
+      background: white;
+      color: #2c3e50;
+      border: 1px solid #ddd;
+      &:hover { border-color: #f4b942; }
+    }
+  }
 }
 
 .btn-checkout {

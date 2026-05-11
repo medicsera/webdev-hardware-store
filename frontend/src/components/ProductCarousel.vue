@@ -98,8 +98,8 @@ onUnmounted(() => {
   }
 })
 
-const handleAddToCart = (product: Product) => {
-  cartStore.addToCart(product, 1)
+const handleAddToCart = (product: Product, qty: number) => {
+  cartStore.addToCart(product, qty)
 }
 </script>
 

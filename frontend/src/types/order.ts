@@ -1,16 +1,17 @@
 export interface OrderItem {
   id: number
+  productId: number
   name: string
   price: number
-  image?: string
   quantity: number
+  imageUrl?: string
 }
 
 export interface Order {
   id: number
   items: OrderItem[]
   total: number
-  date: string
-  time: string
+  deliveryCost: number
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  createdAt: string
 }

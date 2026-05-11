@@ -43,8 +43,16 @@ const fetchProduct = async () => {
 watch(() => route.params.id, fetchProduct)
 onMounted(fetchProduct)
 
+const maxStock = computed(() => product.value?.quantity ?? Infinity)
+
+const clampQuantity = () => {
+  if (!Number.isInteger(quantity.value) || quantity.value < 1) quantity.value = 1
+  else if (quantity.value > maxStock.value) quantity.value = maxStock.value as number
+}
+
 const handleAddToCart = () => {
   if (!product.value || isAdding.value) return
+  clampQuantity()
   isAdding.value = true
   cartStore.addToCart(product.value, quantity.value)
   setTimeout(() => { isAdding.value = false }, 2000)
@@ -130,8 +138,16 @@ const handleAddToCart = () => {
             </button>
             <div v-if="isInStock" class="quantity-selector">
               <button class="quantity-btn quantity-btn--minus" @click="quantity > 1 && quantity--" :disabled="quantity <= 1">−</button>
-              <span class="quantity-value">{{ quantity }} шт.</span>
-              <button class="quantity-btn quantity-btn--plus" @click="quantity++">+</button>
+              <input
+                type="number"
+                class="quantity-input"
+                v-model.number="quantity"
+                min="1"
+                :max="maxStock"
+                @blur="clampQuantity"
+                @keydown.enter.prevent="clampQuantity"
+              />
+              <button class="quantity-btn quantity-btn--plus" @click="quantity < maxStock && quantity++" :disabled="quantity >= maxStock">+</button>
             </div>
           </div>
         </div>
@@ -382,12 +398,22 @@ const handleAddToCart = () => {
   &--plus  { color: #27ae60; }
 }
 
-.quantity-value {
+.quantity-input {
   font-size: 12px;
   font-weight: 500;
-  min-width: 50px;
+  width: 52px;
   text-align: center;
   color: #555;
+  border: none;
+  background: transparent;
+  outline: none;
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 // Description

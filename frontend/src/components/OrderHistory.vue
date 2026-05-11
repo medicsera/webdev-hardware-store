@@ -1,55 +1,37 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Order } from '@/types/order'
+import api from '@/api/auth'
 
 const orders = ref<Order[]>([])
 const loading = ref(true)
 const carouselRef = ref<HTMLElement | null>(null)
 const forceUpdate = ref(0)
 
-// Mock data for demonstration
-const mockOrders: Order[] = [
-  {
-    id: 1,
-    items: [
-      { id: 101, name: 'Дрель Bosch GSB 13 RE', price: 5490, image: '/placeholder-product.jpg', quantity: 1 },
-      { id: 102, name: 'Набор бит 32 шт', price: 890, image: '/placeholder-product.jpg', quantity: 2 }
-    ],
-    total: 7270,
-    date: '20.08.2025',
-    time: '17:15',
-    status: 'delivered'
-  },
-  {
-    id: 2,
-    items: [
-      { id: 201, name: 'Шуруповёрт Makita DF333D', price: 8990, image: '/placeholder-product.jpg', quantity: 1 }
-    ],
-    total: 8990,
-    date: '15.08.2025',
-    time: '10:30',
-    status: 'shipped'
-  },
-  {
-    id: 3,
-    items: [
-      { id: 301, name: 'Перфоратор DeWalt D25133K', price: 12500, image: '/placeholder-product.jpg', quantity: 1 },
-      { id: 302, name: 'Буры SDS-plus набор', price: 1200, image: '/placeholder-product.jpg', quantity: 1 },
-      { id: 303, name: 'Пылесборник', price: 350, image: '/placeholder-product.jpg', quantity: 3 }
-    ],
-    total: 14750,
-    date: '10.08.2025',
-    time: '14:45',
-    status: 'processing'
-  }
-]
+const statusLabel: Record<string, string> = {
+  pending:    'Ожидает',
+  processing: 'В обработке',
+  shipped:    'Отправлен',
+  delivered:  'Доставлен',
+  cancelled:  'Отменён',
+}
 
-const formattedPrice = (price: number): string => {
+function formatPrice(price: number): string {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
     currency: 'RUB',
     minimumFractionDigits: 2,
   }).format(price)
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
 
 const canScrollLeft = computed(() => {
@@ -74,46 +56,42 @@ const scroll = (direction: 'left' | 'right') => {
     ? container.scrollLeft - scrollAmount
     : container.scrollLeft + scrollAmount
 
-  container.scrollTo({
-    left: targetScroll,
-    behavior: 'smooth'
-  })
-
-  setTimeout(() => {
-    forceUpdate.value++
-  }, 300)
+  container.scrollTo({ left: targetScroll, behavior: 'smooth' })
+  setTimeout(() => { forceUpdate.value++ }, 300)
 }
 
-const scrollLeft = () => { if (canScrollLeft.value) scroll('left') }
+const scrollLeft  = () => { if (canScrollLeft.value)  scroll('left') }
 const scrollRight = () => { if (canScrollRight.value) scroll('right') }
 
-const handleScroll = () => {
-  forceUpdate.value++
-}
+const handleScroll = () => { forceUpdate.value++ }
 
 onMounted(async () => {
   loading.value = true
-  await new Promise(r => setTimeout(r, 300))
-  orders.value = mockOrders
-  loading.value = false
+  try {
+    const resp = await api.get('/buyer/orders')
+    orders.value = resp.data
+  } catch (err) {
+    console.error('Failed to load orders', err)
+  } finally {
+    loading.value = false
+  }
+
+  await new Promise(r => setTimeout(r, 50))
   forceUpdate.value++
 
   const container = carouselRef.value
-  if (container) {
-    container.addEventListener('scroll', handleScroll)
-  }
+  if (container) container.addEventListener('scroll', handleScroll)
 })
 
 onUnmounted(() => {
   const container = carouselRef.value
-  if (container) {
-    container.removeEventListener('scroll', handleScroll)
-  }
+  if (container) container.removeEventListener('scroll', handleScroll)
 })
 </script>
 
 <template>
   <div class="order-history">
+    <!-- Skeleton -->
     <div v-if="loading" class="order-history__loading">
       <div v-for="n in 3" :key="n" class="order-card order-card--skeleton">
         <div class="skeleton skeleton--image"></div>
@@ -122,28 +100,36 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- Empty -->
     <div v-else-if="orders.length === 0" class="order-history__empty">
       <p>У вас пока нет заказов</p>
       <router-link to="/catalog" class="order-history__link">Перейти в каталог</router-link>
     </div>
 
+    <!-- Orders carousel -->
     <template v-else>
-      <div
-        ref="carouselRef"
-        class="order-history__carousel"
-      >
-        <div
-          v-for="order in orders"
-          :key="order.id"
-          class="order-card"
-        >
-          <div class="order-card__image-placeholder"></div>
+      <div ref="carouselRef" class="order-history__carousel">
+        <div v-for="order in orders" :key="order.id" class="order-card">
+          <div class="order-card__image">
+            <img
+              v-if="order.items[0]?.imageUrl"
+              :src="order.items[0].imageUrl"
+              :alt="order.items[0].name"
+            />
+            <div v-else class="order-card__image-placeholder"></div>
+          </div>
 
           <div class="order-card__info">
             <h4 class="order-card__name">{{ order.items[0]?.name }}</h4>
-            <p class="order-card__price">{{ formattedPrice(order.total) }}</p>
-            <p class="order-card__date">Дата: {{ order.date }}</p>
-            <p class="order-card__time">Время: {{ order.time }}</p>
+            <p v-if="order.items.length > 1" class="order-card__more">
+              + ещё {{ order.items.length - 1 }} {{ order.items.length - 1 === 1 ? 'товар' : 'товара' }}
+            </p>
+            <p class="order-card__price">{{ formatPrice(order.total) }}</p>
+            <p class="order-card__date">{{ formatDate(order.createdAt) }}</p>
+            <p class="order-card__time">{{ formatTime(order.createdAt) }}</p>
+            <span class="order-card__status" :class="`order-card__status--${order.status}`">
+              {{ statusLabel[order.status] ?? order.status }}
+            </span>
           </div>
         </div>
       </div>
@@ -188,10 +174,7 @@ onUnmounted(() => {
     padding: 40px;
     color: #999;
 
-    p {
-      margin: 0 0 16px;
-      font-size: 15px;
-    }
+    p { margin: 0 0 16px; font-size: 15px; }
   }
 
   &__link {
@@ -204,10 +187,7 @@ onUnmounted(() => {
     font-weight: 600;
     text-decoration: none;
     transition: background 0.2s;
-
-    &:hover {
-      background: #e0a830;
-    }
+    &:hover { background: #e0a830; }
   }
 
   &__carousel {
@@ -220,15 +200,8 @@ onUnmounted(() => {
     padding-bottom: 8px;
     scrollbar-width: none;
     -ms-overflow-style: none;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    > * {
-      flex-shrink: 0;
-      scroll-snap-align: start;
-    }
+    &::-webkit-scrollbar { display: none; }
+    > * { flex-shrink: 0; scroll-snap-align: start; }
   }
 
   &__controls {
@@ -248,9 +221,7 @@ onUnmounted(() => {
   overflow: hidden;
   transition: box-shadow 0.2s;
 
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
+  &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
 
   &--skeleton {
     pointer-events: none;
@@ -261,28 +232,29 @@ onUnmounted(() => {
       animation: skeleton-loading 1.5s infinite;
       border-radius: 4px;
 
-      &--image {
-        width: 100%;
-        height: 120px;
-      }
+      &--image { width: 100%; height: 120px; }
+      &--title { height: 14px; width: 80%; margin: 12px; }
+      &--price { height: 16px; width: 50%; margin: 0 12px 12px; }
+    }
+  }
 
-      &--title {
-        height: 14px;
-        width: 80%;
-        margin: 12px;
-      }
+  &__image {
+    width: 100%;
+    height: 120px;
+    background: #d5d5d5;
+    overflow: hidden;
 
-      &--price {
-        height: 16px;
-        width: 50%;
-        margin: 0 12px 12px;
-      }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
   }
 
   &__image-placeholder {
     width: 100%;
-    height: 120px;
+    height: 100%;
     background: #d5d5d5;
   }
 
@@ -304,6 +276,12 @@ onUnmounted(() => {
     overflow: hidden;
   }
 
+  &__more {
+    font-size: 11px;
+    color: #999;
+    margin: 0;
+  }
+
   &__price {
     font-size: 13px;
     font-weight: 700;
@@ -314,13 +292,29 @@ onUnmounted(() => {
   &__date,
   &__time {
     font-size: 11px;
-    color: #333;
+    color: #666;
     margin: 0;
+  }
+
+  &__status {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+
+    &--pending    { background: #fff3cd; color: #856404; }
+    &--processing { background: #cce5ff; color: #004085; }
+    &--shipped    { background: #d4edda; color: #155724; }
+    &--delivered  { background: #d1ecf1; color: #0c5460; }
+    &--cancelled  { background: #f8d7da; color: #721c24; }
   }
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
+  0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
@@ -345,24 +339,15 @@ onUnmounted(() => {
     transform: scale(1.05);
   }
 
-  &:active:not(:disabled) {
-    transform: scale(0.95);
-  }
+  &:active:not(:disabled) { transform: scale(0.95); }
 
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     border-color: #f0f0f0;
-
-    &:hover {
-      background: white;
-      transform: none;
-    }
+    &:hover { background: white; transform: none; }
   }
 
-  svg {
-    width: 20px;
-    height: 20px;
-  }
+  svg { width: 20px; height: 20px; }
 }
 </style>

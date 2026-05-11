@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/api/auth'
 import { jwtDecode } from 'jwt-decode'
+import { useCartStore } from '@/stores/cart'
 
 export interface User {
     id: number
@@ -46,7 +47,12 @@ export const useAuthStore = defineStore('auth', () => {
 
     function init() {
         const token = localStorage.getItem(TOKEN_KEY)
-        if (token) setUserFromToken(token)
+        if (token) {
+            setUserFromToken(token)
+            if (currentUser.value?.id) {
+                useCartStore().initForUser(String(currentUser.value.id))
+            }
+        }
     }
 
     init()
@@ -57,6 +63,9 @@ export const useAuthStore = defineStore('auth', () => {
             const token = resp.data.token
             localStorage.setItem(TOKEN_KEY, token)
             setUserFromToken(token)
+            if (currentUser.value?.id) {
+                useCartStore().initForUser(String(currentUser.value.id))
+            }
             return { success: true }
         } catch (err: any) {
             const msg = err?.response?.data?.message ?? 'Ошибка входа'
@@ -67,7 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
     async function register(
         firstName: string,
         lastName: string,
-         phone: string,
+        phone: string,
         email: string,
         password: string
     ): Promise<{ success: boolean; error?: string }> {
@@ -76,6 +85,9 @@ export const useAuthStore = defineStore('auth', () => {
             const token = resp.data.token
             localStorage.setItem(TOKEN_KEY, token)
             setUserFromToken(token)
+            if (currentUser.value?.id) {
+                useCartStore().initForUser(String(currentUser.value.id))
+            }
             return { success: true }
         } catch (err: any) {
             const msg = err?.response?.data?.message ?? 'Ошибка регистрации'
@@ -84,6 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     function logout() {
+        useCartStore().initForUser(null)
         currentUser.value = null
         clearToken()
     }

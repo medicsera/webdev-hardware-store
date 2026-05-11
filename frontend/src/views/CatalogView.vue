@@ -4,12 +4,14 @@ import { useRoute } from 'vue-router'
 import ProductCard from '@/components/ProductCard.vue'
 import { useProducts } from '@/composables/useProducts'
 import { useCategories } from '@/composables/useCategories'
+import { useCartStore } from '@/stores/cart'
 import type { Category } from '@/types/category'
 import type { Product } from '@/types/product'
 
 const route = useRoute()
 const { products, loading, fetchProducts } = useProducts()
 const { allCategories, fetchAllCategories } = useCategories()
+const cartStore = useCartStore()
 
 const sortBy = ref<'default' | 'price-asc' | 'price-desc'>('default')
 const priceFrom = ref('')
@@ -59,7 +61,9 @@ watch(allCategories, async (cats) => {
   if (cats.length > 0) await loadProducts()
 }, { once: true })
 
-const handleAddToCart = (_product: Product) => {}
+const handleAddToCart = (product: Product, qty: number) => {
+  cartStore.addToCart(product, qty)
+}
 const handleQuantityChange = (_id: number, _qty: number) => {}
 </script>
 

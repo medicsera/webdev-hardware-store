@@ -8,10 +8,69 @@ interface Product    { id: number; name: string; description: string; price: num
 interface Char       { name: string; type: string }
 interface Notification { id: number; msg: string; type: 'error' | 'success' | 'info' }
 
+interface AdminOrderItem { id: number; productId: number; name: string; price: number; quantity: number; imageUrl: string | null }
+interface AdminOrder {
+  id: number; total: number; deliveryCost: number; status: string; createdAt: string
+  userEmail: string; userFirstName: string | null; userLastName: string | null; userPhone: string | null
+  items: AdminOrderItem[]
+}
+
+
+const activeTab = ref<'catalog' | 'orders'>('catalog')
 
 const catalogs    = ref<Catalog[]>([])
 const subCatalogs = ref<SubCatalog[]>([])
 const products    = ref<Product[]>([])
+
+// ── orders ──
+const orders         = ref<AdminOrder[]>([])
+const ordersLoading  = ref(false)
+const expandedOrders = ref<Set<number>>(new Set())
+
+const STATUS_LABELS: Record<string, string> = {
+  pending:    'Ожидает',
+  processing: 'В обработке',
+  shipped:    'В доставке',
+  delivered:  'Доставлен',
+  cancelled:  'Отменён',
+}
+const STATUS_OPTIONS = Object.entries(STATUS_LABELS)
+
+async function loadOrders() {
+  ordersLoading.value = true
+  try {
+    const res = await api.get('/admin/orders')
+    orders.value = res.data
+  } catch (e) { notify(apiError(e)) }
+  finally { ordersLoading.value = false }
+}
+
+async function changeOrderStatus(order: AdminOrder, status: string) {
+  try {
+    const res = await api.patch(`/admin/orders/${order.id}/status`, { status })
+    const idx = orders.value.findIndex(o => o.id === order.id)
+    if (idx !== -1) orders.value[idx] = res.data
+    notify('Статус обновлён', 'success')
+  } catch (e) { notify(apiError(e)) }
+}
+
+function toggleExpand(id: number) {
+  if (expandedOrders.value.has(id)) expandedOrders.value.delete(id)
+  else expandedOrders.value.add(id)
+}
+
+function formatOrderDate(iso: string) {
+  return new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatOrderPrice(n: number) {
+  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2 }).format(n)
+}
+
+function switchTab(tab: 'catalog' | 'orders') {
+  activeTab.value = tab
+  if (tab === 'orders' && orders.value.length === 0) loadOrders()
+}
 
 // --- catalog editing ---
 const selectedCatalog    = ref<Catalog | null>(null)
@@ -364,19 +423,76 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
 
         <!-- Sidebar -->
         <aside class="admin-sidebar">
-          <button class="sidebar-tab sidebar-tab--active">
+          <button class="sidebar-tab" :class="{ 'sidebar-tab--active': activeTab === 'catalog' }" @click="switchTab('catalog')">
             Каталог / Товары
           </button>
           <button class="sidebar-tab" @click="openAddProduct">
             + Добавить товар
+          </button>
+          <button class="sidebar-tab" :class="{ 'sidebar-tab--active': activeTab === 'orders' }" @click="switchTab('orders')">
+            Заказы
           </button>
         </aside>
 
         <!-- Content -->
         <div class="admin-content">
 
+          <!-- ===== Orders ===== -->
+          <div v-if="activeTab === 'orders'" class="section-box">
+            <div class="section-header">
+              <h3 class="section-title">Заказы</h3>
+              <button class="btn btn--green btn--sm" @click="loadOrders">&#8635; Обновить</button>
+            </div>
+
+            <div v-if="ordersLoading" class="orders-loading">Загрузка...</div>
+            <div v-else-if="orders.length === 0" class="empty-hint" style="padding:20px 0">Заказов нет</div>
+
+            <div v-else class="orders-list">
+              <div v-for="order in orders" :key="order.id" class="order-row">
+                <!-- Order header -->
+                <div class="order-row__head" @click="toggleExpand(order.id)">
+                  <span class="order-row__id">#{{ order.id }}</span>
+                  <span class="order-row__date">{{ formatOrderDate(order.createdAt) }}</span>
+                  <span class="order-row__user">
+                    {{ order.userFirstName || order.userLastName ? `${order.userFirstName ?? ''} ${order.userLastName ?? ''}`.trim() : order.userEmail }}
+                    <span class="order-row__email">({{ order.userEmail }})</span>
+                  </span>
+                  <span class="order-row__total">{{ formatOrderPrice(order.total) }}</span>
+                  <div class="order-row__status-wrap" @click.stop>
+                    <select
+                      class="order-status-select"
+                      :class="`order-status-select--${order.status}`"
+                      :value="order.status"
+                      @change="changeOrderStatus(order, ($event.target as HTMLSelectElement).value)"
+                    >
+                      <option v-for="[val, label] in STATUS_OPTIONS" :key="val" :value="val">{{ label }}</option>
+                    </select>
+                  </div>
+                  <span class="order-row__toggle">{{ expandedOrders.has(order.id) ? '▲' : '▼' }}</span>
+                </div>
+
+                <!-- Order items (expanded) -->
+                <div v-if="expandedOrders.has(order.id)" class="order-row__items">
+                  <div v-for="item in order.items" :key="item.id" class="order-item">
+                    <img v-if="item.imageUrl" :src="item.imageUrl" class="order-item__img" alt="" />
+                    <div v-else class="order-item__img order-item__img--placeholder"></div>
+                    <span class="order-item__name">{{ item.name }}</span>
+                    <span class="order-item__qty">{{ item.quantity }} шт.</span>
+                    <span class="order-item__price">{{ formatOrderPrice(item.price) }}</span>
+                    <span class="order-item__subtotal">{{ formatOrderPrice(item.price * item.quantity) }}</span>
+                  </div>
+                  <div class="order-row__footer">
+                    <span v-if="order.userPhone" class="order-footer__phone">Тел: {{ order.userPhone }}</span>
+                    <span class="order-footer__delivery">Доставка: {{ formatOrderPrice(order.deliveryCost) }}</span>
+                    <span class="order-footer__total">Итого: {{ formatOrderPrice(order.total) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- ===== Catalog & Products ===== -->
-          <div class="section-box">
+          <div v-if="activeTab === 'catalog'" class="section-box">
 
               <!-- Catalog editing -->
               <div class="section-header">
@@ -1130,4 +1246,190 @@ select.form-input { height: 32px; }
 .notif-leave-active { transition: all 0.25s ease; }
 .notif-enter-from   { opacity: 0; transform: translateY(-16px); }
 .notif-leave-to     { opacity: 0; transform: translateY(-8px); }
+
+// ── orders ──────────────────────────────────────────────────────────────────
+.orders-loading {
+  text-align: center;
+  padding: 24px;
+  color: #888;
+  font-size: 13px;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.order-row {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: #fafafa;
+    cursor: pointer;
+    flex-wrap: wrap;
+    transition: background 0.15s;
+    &:hover { background: #f0f0f0; }
+  }
+
+  &__id {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2c3e50;
+    min-width: 36px;
+    flex-shrink: 0;
+  }
+
+  &__date {
+    font-size: 12px;
+    color: #888;
+    flex-shrink: 0;
+    min-width: 110px;
+  }
+
+  &__user {
+    flex: 1;
+    font-size: 13px;
+    color: #333;
+    min-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__email {
+    font-size: 11px;
+    color: #aaa;
+  }
+
+  &__total {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c3e50;
+    flex-shrink: 0;
+    min-width: 90px;
+    text-align: right;
+  }
+
+  &__status-wrap {
+    flex-shrink: 0;
+  }
+
+  &__toggle {
+    font-size: 10px;
+    color: #aaa;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+  }
+
+  &__items {
+    border-top: 1px solid #eee;
+    padding: 10px 12px 6px;
+    background: white;
+  }
+
+  &__footer {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.order-status-select {
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+  &:focus { border-color: #f4b942; }
+
+  &--pending    { background: #fff8e1; color: #795548; }
+  &--processing { background: #e3f2fd; color: #1565c0; }
+  &--shipped    { background: #f3e5f5; color: #6a1b9a; }
+  &--delivered  { background: #e8f5e9; color: #2e7d32; }
+  &--cancelled  { background: #fce4ec; color: #c62828; }
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f5f5f5;
+  &:last-of-type { border-bottom: none; }
+
+  &__img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+
+    &--placeholder {
+      background: #eee;
+    }
+  }
+
+  &__name {
+    flex: 1;
+    font-size: 13px;
+    color: #333;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__qty {
+    font-size: 12px;
+    color: #666;
+    flex-shrink: 0;
+    min-width: 44px;
+    text-align: right;
+  }
+
+  &__price {
+    font-size: 12px;
+    color: #888;
+    flex-shrink: 0;
+    min-width: 72px;
+    text-align: right;
+  }
+
+  &__subtotal {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c3e50;
+    flex-shrink: 0;
+    min-width: 80px;
+    text-align: right;
+  }
+}
+
+.order-footer__phone,
+.order-footer__delivery,
+.order-footer__total {
+  font-size: 12px;
+  color: #555;
+}
+
+.order-footer__total {
+  font-weight: 700;
+  color: #2c3e50;
+}
 </style>
