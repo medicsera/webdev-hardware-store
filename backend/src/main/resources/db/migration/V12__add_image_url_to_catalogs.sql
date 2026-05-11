@@ -1,0 +1,2 @@
+ALTER TABLE catalogs ADD COLUMN image_url VARCHAR(1024);
+ALTER TABLE sub_catalogs ADD COLUMN image_url VARCHAR(1024);

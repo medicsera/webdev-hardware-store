@@ -1,0 +1,15 @@
+CREATE TABLE catalogs (
+    id   BIGSERIAL    PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE sub_catalogs (
+    id         BIGSERIAL    PRIMARY KEY,
+    name       VARCHAR(255) NOT NULL,
+    slug       VARCHAR(255) NOT NULL UNIQUE,
+    catalog_id BIGINT       NOT NULL REFERENCES catalogs (id) ON DELETE CASCADE
+);
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS catalog_id     BIGINT REFERENCES catalogs (id) ON DELETE SET NULL;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS sub_catalog_id BIGINT REFERENCES sub_catalogs (id) ON DELETE SET NULL;
