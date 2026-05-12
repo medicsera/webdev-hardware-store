@@ -11,6 +11,7 @@ interface Notification { id: number; msg: string; type: 'error' | 'success' | 'i
 interface AdminOrderItem { id: number; productId: number; name: string; price: number; quantity: number; imageUrl: string | null }
 interface AdminOrder {
   id: number; total: number; deliveryCost: number; status: string; createdAt: string
+  deliveryMethod: string; deliveryAddress: string | null
   userEmail: string; userFirstName: string | null; userLastName: string | null; userPhone: string | null
   items: AdminOrderItem[]
 }
@@ -28,13 +29,23 @@ const ordersLoading  = ref(false)
 const expandedOrders = ref<Set<number>>(new Set())
 
 const STATUS_LABELS: Record<string, string> = {
-  pending:    'Ожидает',
-  processing: 'В обработке',
-  shipped:    'В доставке',
-  delivered:  'Доставлен',
-  cancelled:  'Отменён',
+  pending:          'Ожидает',
+  processing:       'В обработке',
+  shipped:          'В доставке',
+  delivered:        'Доставлен',
+  ready_for_pickup: 'Готов к выдаче',
+  picked_up:        'Выдан',
+  cancelled:        'Отменён',
 }
-const STATUS_OPTIONS = Object.entries(STATUS_LABELS)
+
+const DELIVERY_STATUS_KEYS = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
+const PICKUP_STATUS_KEYS   = ['pending', 'processing', 'ready_for_pickup', 'picked_up', 'cancelled']
+
+function orderStatusOptions(order: AdminOrder): [string, string][] {
+  const keys = order.deliveryMethod === 'pickup' ? PICKUP_STATUS_KEYS : DELIVERY_STATUS_KEYS
+  const all  = keys.includes(order.status) ? keys : [order.status, ...keys]
+  return all.map(k => [k, STATUS_LABELS[k] ?? k])
+}
 
 async function loadOrders() {
   ordersLoading.value = true
@@ -487,7 +498,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                       :value="order.status"
                       @change="changeOrderStatus(order, ($event.target as HTMLSelectElement).value)"
                     >
-                      <option v-for="[val, label] in STATUS_OPTIONS" :key="val" :value="val">{{ label }}</option>
+                      <option v-for="[val, label] in orderStatusOptions(order)" :key="val" :value="val">{{ label }}</option>
                     </select>
                   </div>
                   <span class="order-row__toggle">{{ expandedOrders.has(order.id) ? '▲' : '▼' }}</span>
@@ -504,8 +515,19 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                     <span class="order-item__subtotal">{{ formatOrderPrice(item.price * item.quantity) }}</span>
                   </div>
                   <div class="order-row__footer">
+                    <span
+                      v-if="order.deliveryAddress"
+                      class="order-footer__address"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="flex-shrink:0;margin-top:1px">
+                        <path d="M6 1C4.07 1 2.5 2.57 2.5 4.5c0 2.625 3.5 6.5 3.5 6.5s3.5-3.875 3.5-6.5C9.5 2.57 7.93 1 6 1zm0 4.75a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z" fill="#f4b942"/>
+                      </svg>
+                      {{ order.deliveryAddress }}
+                    </span>
                     <span v-if="order.userPhone" class="order-footer__phone">Тел: {{ order.userPhone }}</span>
-                    <span class="order-footer__delivery">Доставка: {{ formatOrderPrice(order.deliveryCost) }}</span>
+                    <span class="order-footer__delivery">
+                      {{ order.deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка' }}: {{ formatOrderPrice(order.deliveryCost) }}
+                    </span>
                     <span class="order-footer__total">Итого: {{ formatOrderPrice(order.total) }}</span>
                   </div>
                 </div>
@@ -640,9 +662,9 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
             <span class="form-label">Название:</span>
             <input v-model="productForm.name" class="form-input" />
           </label>
-          <label class="form-row">
+          <label class="form-row form-row--top">
             <span class="form-label">Описание:</span>
-            <input v-model="productForm.description" class="form-input" />
+            <textarea v-model="productForm.description" class="form-input form-textarea" rows="5" placeholder="Введите описание товара..."></textarea>
           </label>
           <label class="form-row">
             <span class="form-label">Цена (₽):</span>
@@ -1176,11 +1198,26 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   border: 1px solid #ccc;
   border-radius: 3px;
   font-size: 13px;
+  font-family: inherit;
 
   &:focus { outline: none; border-color: #f4b942; }
+  &:disabled { background: #f5f5f5; }
 }
 
 select.form-input { height: 32px; }
+
+.form-textarea {
+  height: auto;
+  padding: 6px 8px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.form-row--top {
+  align-items: flex-start;
+
+  .form-label { padding-top: 6px; }
+}
 
 .form-actions {
   display: flex;
@@ -1478,11 +1515,13 @@ select.form-input { height: 32px; }
   transition: border-color 0.15s;
   &:focus { border-color: #f4b942; }
 
-  &--pending    { background: #fff8e1; color: #795548; }
-  &--processing { background: #e3f2fd; color: #1565c0; }
-  &--shipped    { background: #f3e5f5; color: #6a1b9a; }
-  &--delivered  { background: #e8f5e9; color: #2e7d32; }
-  &--cancelled  { background: #fce4ec; color: #c62828; }
+  &--pending           { background: #fff8e1; color: #795548; }
+  &--processing        { background: #e3f2fd; color: #1565c0; }
+  &--shipped           { background: #f3e5f5; color: #6a1b9a; }
+  &--delivered         { background: #e8f5e9; color: #2e7d32; }
+  &--ready_for_pickup  { background: #fff3e0; color: #e65100; }
+  &--picked_up         { background: #e8f5e9; color: #2e7d32; }
+  &--cancelled         { background: #fce4ec; color: #c62828; }
 }
 
 .order-item {
@@ -1540,6 +1579,18 @@ select.form-input { height: 32px; }
     min-width: 80px;
     text-align: right;
   }
+}
+
+.order-footer__address {
+  flex-basis: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 12px;
+  color: #2c3e50;
+  font-weight: 500;
+  text-align: left;
+  order: -1;
 }
 
 .order-footer__phone,

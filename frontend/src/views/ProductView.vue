@@ -440,6 +440,7 @@ const handleAddToCart = () => {
     color: #555;
     min-height: 200px;
     line-height: 1.6;
+    white-space: pre-wrap;
   }
 }
 

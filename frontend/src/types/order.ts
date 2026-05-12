@@ -12,6 +12,6 @@ export interface Order {
   items: OrderItem[]
   total: number
   deliveryCost: number
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'ready_for_pickup' | 'picked_up' | 'cancelled'
   createdAt: string
 }

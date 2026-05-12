@@ -9,11 +9,13 @@ const carouselRef = ref<HTMLElement | null>(null)
 const forceUpdate = ref(0)
 
 const statusLabel: Record<string, string> = {
-  pending:    'Ожидает',
-  processing: 'В обработке',
-  shipped:    'Отправлен',
-  delivered:  'Доставлен',
-  cancelled:  'Отменён',
+  pending:          'Ожидает',
+  processing:       'В обработке',
+  shipped:          'В доставке',
+  delivered:        'Доставлен',
+  ready_for_pickup: 'Готов к выдаче',
+  picked_up:        'Выдан',
+  cancelled:        'Отменён',
 }
 
 function formatPrice(price: number): string {
@@ -305,11 +307,13 @@ onUnmounted(() => {
     font-weight: 600;
     text-transform: uppercase;
 
-    &--pending    { background: #fff3cd; color: #856404; }
-    &--processing { background: #cce5ff; color: #004085; }
-    &--shipped    { background: #d4edda; color: #155724; }
-    &--delivered  { background: #d1ecf1; color: #0c5460; }
-    &--cancelled  { background: #f8d7da; color: #721c24; }
+    &--pending           { background: #fff3cd; color: #856404; }
+    &--processing        { background: #cce5ff; color: #004085; }
+    &--shipped           { background: #d4edda; color: #155724; }
+    &--delivered         { background: #d1ecf1; color: #0c5460; }
+    &--ready_for_pickup  { background: #fff3e0; color: #e65100; }
+    &--picked_up         { background: #d1ecf1; color: #0c5460; }
+    &--cancelled         { background: #f8d7da; color: #721c24; }
   }
 }
 
