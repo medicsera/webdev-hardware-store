@@ -24,10 +24,14 @@ const subCatalogs = ref<SubCatalog[]>([])
 const products    = ref<Product[]>([])
 
 // ── orders ──
-const orders         = ref<AdminOrder[]>([])
-const ordersLoading  = ref(false)
-const expandedOrders = ref<Set<number>>(new Set())
-const collapsedDays  = ref<Set<string>>(new Set())
+const orders              = ref<AdminOrder[]>([])
+const ordersLoading       = ref(false)
+const expandedOrders      = ref<Set<number>>(new Set())
+const collapsedDays       = ref<Set<string>>(new Set())
+const ordersPage          = ref(0)
+const ordersTotalPages    = ref(0)
+const ordersTotalElements = ref(-1)
+const ORDERS_PAGE_SIZE    = 20
 
 // ── order filters ──
 const orderFilterUser     = ref('')
@@ -35,33 +39,13 @@ const orderSortDir        = ref<'desc' | 'asc'>('desc')
 const orderFilterDateFrom = ref('')
 const orderFilterDateTo   = ref('')
 
-const filteredOrders = computed(() => {
-  let list = orders.value.slice()
-  const q = orderFilterUser.value.trim().toLowerCase()
-  if (q) {
-    list = list.filter(o => {
-      const name = `${o.userFirstName ?? ''} ${o.userLastName ?? ''}`.trim().toLowerCase()
-      return name.includes(q) || o.userEmail.toLowerCase().includes(q)
-    })
-  }
-  if (orderFilterDateFrom.value) {
-    const from = new Date(orderFilterDateFrom.value + 'T00:00:00')
-    list = list.filter(o => new Date(o.createdAt) >= from)
-  }
-  if (orderFilterDateTo.value) {
-    const to = new Date(orderFilterDateTo.value + 'T23:59:59.999')
-    list = list.filter(o => new Date(o.createdAt) <= to)
-  }
-  list.sort((a, b) => {
-    const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    return orderSortDir.value === 'asc' ? diff : -diff
-  })
-  return list
-})
+const hasActiveFilters = computed(() =>
+  !!(orderFilterUser.value.trim() || orderFilterDateFrom.value || orderFilterDateTo.value)
+)
 
 const groupedOrders = computed(() => {
   const groups = new Map<string, AdminOrder[]>()
-  for (const order of filteredOrders.value) {
+  for (const order of orders.value) {
     const day = order.createdAt.slice(0, 10)
     if (!groups.has(day)) groups.set(day, [])
     groups.get(day)!.push(order)
@@ -92,14 +76,36 @@ function orderStatusOptions(order: AdminOrder): [string, string][] {
   return all.map(k => [k, STATUS_LABELS[k] ?? k])
 }
 
-async function loadOrders() {
+async function loadOrders(resetPage = false) {
+  if (resetPage) {
+    ordersPage.value = 0
+    collapsedDays.value = new Set()
+  }
   ordersLoading.value = true
   try {
-    const res = await api.get('/admin/orders')
-    orders.value = res.data
+    const params: Record<string, unknown> = {
+      page: ordersPage.value,
+      size: ORDERS_PAGE_SIZE,
+      sort: orderSortDir.value,
+    }
+    if (orderFilterUser.value.trim())  params.search   = orderFilterUser.value.trim()
+    if (orderFilterDateFrom.value)     params.dateFrom = orderFilterDateFrom.value
+    if (orderFilterDateTo.value)       params.dateTo   = orderFilterDateTo.value
+
+    const res = await api.get('/admin/orders', { params })
+    orders.value             = res.data.content
+    ordersTotalPages.value   = res.data.totalPages
+    ordersTotalElements.value = res.data.totalElements
   } catch (e) { notify(apiError(e)) }
   finally { ordersLoading.value = false }
 }
+
+let _searchDebounce: ReturnType<typeof setTimeout> | null = null
+watch(orderFilterUser, () => {
+  if (_searchDebounce) clearTimeout(_searchDebounce)
+  _searchDebounce = setTimeout(() => loadOrders(true), 400)
+})
+watch([orderFilterDateFrom, orderFilterDateTo, orderSortDir], () => loadOrders(true))
 
 async function changeOrderStatus(order: AdminOrder, status: string) {
   try {
@@ -130,7 +136,7 @@ function formatOrderPrice(n: number) {
 
 function switchTab(tab: 'catalog' | 'orders') {
   activeTab.value = tab
-  if (tab === 'orders' && orders.value.length === 0) loadOrders()
+  if (tab === 'orders' && ordersTotalElements.value === -1) loadOrders()
 }
 
 // --- catalog editing ---
@@ -528,7 +534,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
             </div>
 
             <!-- Filter bar -->
-            <div v-if="!ordersLoading && orders.length > 0" class="orders-filter-bar">
+            <div v-if="ordersTotalElements > 0 || hasActiveFilters" class="orders-filter-bar">
               <input
                 v-model="orderFilterUser"
                 class="orders-filter-input"
@@ -546,18 +552,19 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                 @click="orderSortDir = orderSortDir === 'desc' ? 'asc' : 'desc'"
               >{{ orderSortDir === 'desc' ? '↓ Новые' : '↑ Старые' }}</button>
               <button
-                v-if="orderFilterUser || orderFilterDateFrom || orderFilterDateTo"
+                v-if="hasActiveFilters"
                 class="btn btn--sm orders-reset-btn"
                 @click="orderFilterUser = ''; orderFilterDateFrom = ''; orderFilterDateTo = ''"
               >✕ Сбросить</button>
             </div>
 
             <div v-if="ordersLoading" class="orders-loading">Загрузка...</div>
-            <div v-else-if="orders.length === 0" class="empty-hint" style="padding:20px 0">Заказов нет</div>
-            <div v-else-if="groupedOrders.length === 0" class="empty-hint" style="padding:20px 0">Нет заказов по выбранным фильтрам</div>
+            <div v-else-if="orders.length === 0 && !hasActiveFilters" class="empty-hint" style="padding:20px 0">Заказов нет</div>
+            <div v-else-if="orders.length === 0 && hasActiveFilters" class="empty-hint" style="padding:20px 0">Нет заказов по выбранным фильтрам</div>
 
             <div v-else class="orders-list">
               <template v-for="group in groupedOrders" :key="group.day">
+
                 <div class="orders-day-header" @click="toggleDay(group.day)">
                   <span>{{ formatDayHeader(group.day) }} <span class="orders-day-count">({{ group.items.length }})</span></span>
                   <span class="orders-day-chevron" :class="{ 'orders-day-chevron--collapsed': collapsedDays.has(group.day) }">▼</span>
@@ -616,6 +623,24 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
               </div>
               </div>
               </template>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="ordersTotalPages > 1" class="orders-pagination">
+              <button
+                class="orders-pagination__btn"
+                :disabled="ordersPage === 0"
+                @click="ordersPage--; loadOrders()"
+              >← Назад</button>
+              <span class="orders-pagination__info">
+                {{ ordersPage + 1 }} / {{ ordersTotalPages }}
+                <span class="orders-pagination__total">({{ ordersTotalElements }} заказов)</span>
+              </span>
+              <button
+                class="orders-pagination__btn"
+                :disabled="ordersPage >= ordersTotalPages - 1"
+                @click="ordersPage++; loadOrders()"
+              >Вперёд →</button>
             </div>
           </div>
 
@@ -1796,5 +1821,44 @@ select.form-input { height: 32px; }
 .order-footer__total {
   font-weight: 700;
   color: #2c3e50;
+}
+
+.orders-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 0 4px;
+
+  &__btn {
+    padding: 6px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+
+    &:hover:not(:disabled) {
+      background: #f5f5f5;
+      border-color: #bbb;
+    }
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+
+  &__info {
+    font-size: 13px;
+    color: #555;
+    white-space: nowrap;
+  }
+
+  &__total {
+    color: #aaa;
+    font-size: 12px;
+    margin-left: 4px;
+  }
 }
 </style>

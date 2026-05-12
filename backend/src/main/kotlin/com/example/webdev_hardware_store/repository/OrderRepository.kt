@@ -1,19 +1,21 @@
 package com.example.webdev_hardware_store.repository
 
 import com.example.webdev_hardware_store.model.Order
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 
-interface OrderRepository : JpaRepository<Order, Long> {
-    fun findByUserIdOrderByCreatedAtDesc(userId: Long): List<Order>
+interface OrderRepository : JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
-    @Query("SELECT o FROM Order o JOIN FETCH o.user ORDER BY o.createdAt DESC")
-    fun findAllWithUserOrderByCreatedAtDesc(): List<Order>
+    fun findByUserIdOrderByCreatedAtDesc(userId: Long): List<Order>
 
     @Query("SELECT o FROM Order o JOIN FETCH o.user WHERE o.id = :id")
     fun findByIdWithUser(@org.springframework.data.repository.query.Param("id") id: Long): java.util.Optional<Order>
 
-    // Возвращает catalog_id отсортированные по суммарному количеству заказанных позиций
     @Query(value = """
         SELECT p.catalog_id
         FROM order_items oi
@@ -23,4 +25,8 @@ interface OrderRepository : JpaRepository<Order, Long> {
         ORDER BY SUM(oi.quantity) DESC
     """, nativeQuery = true)
     fun findPopularCatalogIds(): List<Long>
+
+    // Загружает user через EntityGraph вместо JOIN FETCH, чтобы корректно работала SQL-пагинация
+    @EntityGraph(attributePaths = ["user"])
+    override fun findAll(spec: Specification<Order>?, pageable: Pageable): Page<Order>
 }

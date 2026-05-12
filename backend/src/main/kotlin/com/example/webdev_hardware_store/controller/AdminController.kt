@@ -1,9 +1,17 @@
 package com.example.webdev_hardware_store.controller
 
 import com.example.webdev_hardware_store.dto.ProductDto
+import com.example.webdev_hardware_store.model.Order
+import com.example.webdev_hardware_store.model.User
 import com.example.webdev_hardware_store.repository.OrderRepository
 import com.example.webdev_hardware_store.service.ImageUploadService
 import com.example.webdev_hardware_store.service.ProductService
+import jakarta.persistence.criteria.JoinType
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -11,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
+import java.time.LocalDate
 
 data class UpdateOrderStatusDto(val status: String)
 
@@ -94,8 +103,43 @@ class AdminController(
     // ── Orders ──────────────────────────────────────────────────────────────
 
     @GetMapping("/orders")
-    fun listOrders(): List<AdminOrderDto> =
-        orderRepository.findAllWithUserOrderByCreatedAtDesc().map { toAdminDto(it) }
+    fun listOrders(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dateFrom: LocalDate?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dateTo: LocalDate?,
+        @RequestParam(defaultValue = "desc") sort: String
+    ): Page<AdminOrderDto> {
+        val direction = if (sort == "asc") Sort.Direction.ASC else Sort.Direction.DESC
+        val pageable  = PageRequest.of(page, size, Sort.by(direction, "createdAt"))
+
+        var spec = Specification.where<Order>(null)
+
+        if (!search.isNullOrBlank()) {
+            val q = "%${search.trim().lowercase()}%"
+            spec = spec.and { root, _, cb ->
+                val u = root.join<Order, User>("user", JoinType.LEFT)
+                cb.or(
+                    cb.like(cb.lower(u.get("username")), q),
+                    cb.like(cb.lower(cb.coalesce(u.get("firstName"), "")), q),
+                    cb.like(cb.lower(cb.coalesce(u.get("lastName"), "")), q)
+                )
+            }
+        }
+        if (dateFrom != null) {
+            spec = spec.and { root, _, cb ->
+                cb.greaterThanOrEqualTo(root.get("createdAt"), dateFrom.atStartOfDay())
+            }
+        }
+        if (dateTo != null) {
+            spec = spec.and { root, _, cb ->
+                cb.lessThan(root.get("createdAt"), dateTo.plusDays(1).atStartOfDay())
+            }
+        }
+
+        return orderRepository.findAll(spec, pageable).map { toAdminDto(it) }
+    }
 
     @Transactional
     @PatchMapping("/orders/{id}/status")
