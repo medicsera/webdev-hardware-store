@@ -165,6 +165,9 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .order-history {
+  width: 100%;
+  min-width: 0;
+
   &__loading {
     display: flex;
     gap: 16px;
