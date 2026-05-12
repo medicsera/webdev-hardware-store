@@ -98,6 +98,13 @@ const productPage        = ref(0)
 const PROD_PER_PAGE      = 3
 const slideDirection     = ref<'left' | 'right'>('left')
 
+// ── loading / submitting states ──
+const savingProduct     = ref(false)
+const savingCatalog     = ref(false)
+const savingSub         = ref(false)
+const deletingProductId = ref<number | null>(null)
+const removingImageUrl  = ref<string | null>(null)
+
 function prevProd() { slideDirection.value = 'right'; productPage.value-- }
 function nextProd() { slideDirection.value = 'left';  productPage.value++ }
 
@@ -126,11 +133,13 @@ function removeNewImage(index: number) {
 
 async function removeExistingImage(imageUrl: string) {
   if (!productForm.value.id) return
+  removingImageUrl.value = imageUrl
   try {
     const res = await api.delete(`/admin/products/${productForm.value.id}/images`, { params: { imageUrl } })
     productForm.value.imageUrls = res.data.imageUrls
     await loadAll()
   } catch (e) { notify(apiError(e)) }
+  finally { removingImageUrl.value = null }
 }
 
 // --- notifications ---
@@ -249,6 +258,7 @@ function removeCatalogImg() {
 
 async function saveCatalogModal() {
   if (!catalogModalName.value.trim()) { notify('Введите название каталога'); return }
+  savingCatalog.value = true
   try {
     const slug = catalogModalName.value.trim().toLowerCase().replace(/\s+/g, '-')
     let id: number
@@ -268,16 +278,19 @@ async function saveCatalogModal() {
     selectedCatalog.value  = null
     await loadAll()
   } catch (e) { notify(apiError(e)) }
+  finally { savingCatalog.value = false }
 }
 
 async function deleteCatalogInModal() {
   if (!confirm('Удалить каталог?')) return
+  savingCatalog.value = true
   try {
     await api.delete(`/admin/catalogs/${selectedCatalog.value!.id}`)
     showCatalogModal.value = false
     selectedCatalog.value  = null
     await loadAll()
   } catch (e) { notify(apiError(e)) }
+  finally { savingCatalog.value = false }
 }
 
 // ---- subcatalog CRUD ----
@@ -323,6 +336,7 @@ function removeSubImg() {
 
 async function saveSubModal() {
   if (!subModalName.value.trim()) { notify('Введите название подкаталога'); return }
+  savingSub.value = true
   try {
     const slug = subModalName.value.trim().toLowerCase().replace(/\s+/g, '-')
     let id: number
@@ -343,16 +357,19 @@ async function saveSubModal() {
     showSubModal.value = false
     await loadAll()
   } catch (e) { notify(apiError(e)) }
+  finally { savingSub.value = false }
 }
 
 async function deleteSubInModal() {
   if (!confirm('Удалить подкаталог?')) return
+  savingSub.value = true
   try {
     await api.delete(`/admin/subcatalogs/${selectedSubCatalog.value!.id}`)
     showSubModal.value       = false
     selectedSubCatalog.value = null
     await loadAll()
   } catch (e) { notify(apiError(e)) }
+  finally { savingSub.value = false }
 }
 
 // ---- product CRUD ----
@@ -373,13 +390,17 @@ function editProduct(p: Product) {
 }
 async function removeProduct(id: number) {
   if (!confirm('Удалить товар?')) return
+  deletingProductId.value = id
   try {
     await api.delete(`/admin/products/${id}`)
+    if (showProductModal.value) showProductModal.value = false
     await loadAll()
   } catch (e) { notify(apiError(e)) }
+  finally { deletingProductId.value = null }
 }
 async function saveProduct() {
   if (!productForm.value.name.trim()) { notify('Введите название товара'); return }
+  savingProduct.value = true
   try {
     const characteristics = Object.fromEntries(
       chars.value.filter(c => c.name.trim()).map(c => [c.name.trim(), c.type.trim()])
@@ -402,6 +423,7 @@ async function saveProduct() {
     resetForm()
     showProductModal.value = false
   } catch (e) { notify(apiError(e)) }
+  finally { savingProduct.value = false }
 }
 function resetForm() {
   productForm.value = { id: null, name: '', description: '', price: 0, quantity: 1, catalogId: null, subCatalogId: null, imageUrls: [] }
@@ -542,8 +564,21 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                 <button class="arrow" :disabled="!canNextSub" @click="subCatalogPage++">&#8594;</button>
               </div>
 
+              <!-- Product filter indicator -->
+              <div class="product-filter-bar">
+                <span v-if="selectedSubCatalog" class="filter-badge">
+                  Подкаталог: {{ selectedSubCatalog.name }}
+                  <button class="filter-badge__clear" @click="selectedSubCatalog = null; productPage = 0" title="Сбросить">✕</button>
+                </span>
+                <span v-else-if="selectedCatalog" class="filter-badge">
+                  Каталог: {{ selectedCatalog.name }}
+                  <button class="filter-badge__clear" @click="selectedCatalog = null; selectedSubCatalog = null; productPage = 0" title="Сбросить">✕</button>
+                </span>
+                <span v-else class="filter-badge filter-badge--all">Все товары ({{ products.length }})</span>
+              </div>
+
               <!-- Product cards -->
-              <div class="carousel-row" style="margin-top:16px; align-items:flex-start">
+              <div class="carousel-row" style="margin-top:8px; align-items:flex-start">
                 <button class="arrow" style="margin-top:60px" :disabled="!canPrevProd" @click="prevProd">&#8592;</button>
                 <div class="product-cards-viewport">
                   <transition :name="'slide-' + slideDirection" mode="out-in">
@@ -557,8 +592,11 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                             <p class="product-card__name">{{ p.name }}</p>
                             <p class="product-card__price">{{ p.price.toFixed(2) }} ₽</p>
                             <div class="product-card__actions">
-                              <button class="btn btn--orange btn--sm" @click="editProduct(p)">Изменить</button>
-                              <button class="btn btn--red btn--sm"    @click="removeProduct(p.id)">Удалить</button>
+                              <button class="btn btn--orange btn--sm" :disabled="deletingProductId === p.id" @click="editProduct(p)">Изменить</button>
+                              <button class="btn btn--red btn--sm" :disabled="deletingProductId === p.id" @click="removeProduct(p.id)">
+                                <span v-if="deletingProductId === p.id" class="btn-spinner btn-spinner--sm"></span>
+                                {{ deletingProductId === p.id ? '...' : 'Удалить' }}
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -577,7 +615,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
     </div>
 
     <!-- Product modal -->
-    <div v-if="showProductModal" class="modal-backdrop" @click.self="resetForm(); showProductModal = false">
+    <div v-if="showProductModal" class="modal-backdrop" @click.self="!savingProduct && (resetForm(), showProductModal = false)">
       <div class="modal modal--wide">
         <h3 class="modal-title">{{ productForm.id ? 'Изменение товара' : 'Добавление товара' }}</h3>
 
@@ -636,7 +674,9 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
           <div class="image-grid" v-if="productForm.imageUrls.length || newPreviewUrls.length">
             <div v-for="url in productForm.imageUrls" :key="url" class="image-thumb">
               <img :src="url" alt="" />
-              <button class="image-thumb__remove" @click="removeExistingImage(url)" title="Удалить">&#10005;</button>
+              <button class="image-thumb__remove" :disabled="removingImageUrl === url" @click="removeExistingImage(url)" title="Удалить">
+                {{ removingImageUrl === url ? '…' : '✕' }}
+              </button>
             </div>
             <div v-for="(url, i) in newPreviewUrls" :key="'new-' + i" class="image-thumb image-thumb--new">
               <img :src="url" alt="" />
@@ -650,9 +690,15 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
         </div>
 
         <div class="form-actions" style="max-width:none">
-          <button class="btn btn--green"  @click="saveProduct">{{ productForm.id ? 'Сохранить' : 'Добавить' }}</button>
-          <button v-if="productForm.id" class="btn btn--red" @click="removeProduct(productForm.id!); showProductModal = false">Удалить</button>
-          <button class="btn btn--orange" @click="resetForm(); showProductModal = false">Отмена</button>
+          <button class="btn btn--green" :disabled="savingProduct" @click="saveProduct">
+            <span v-if="savingProduct" class="btn-spinner"></span>
+            {{ savingProduct ? 'Сохранение...' : (productForm.id ? 'Сохранить' : 'Добавить') }}
+          </button>
+          <button v-if="productForm.id" class="btn btn--red" :disabled="savingProduct || deletingProductId === productForm.id" @click="removeProduct(productForm.id!)">
+            <span v-if="deletingProductId === productForm.id" class="btn-spinner"></span>
+            {{ deletingProductId === productForm.id ? 'Удаление...' : 'Удалить' }}
+          </button>
+          <button class="btn btn--orange" :disabled="savingProduct" @click="resetForm(); showProductModal = false">Отмена</button>
         </div>
       </div>
     </div>
@@ -673,55 +719,61 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
     </teleport>
 
     <!-- Catalog modal -->
-    <div v-if="showCatalogModal" class="modal-backdrop" @click.self="showCatalogModal = false">
+    <div v-if="showCatalogModal" class="modal-backdrop" @click.self="!savingCatalog && (showCatalogModal = false)">
       <div class="modal">
         <h3 class="modal-title">{{ catalogModalMode === 'add' ? 'Добавить каталог' : 'Изменить каталог' }}</h3>
         <label class="form-row">
           <span class="form-label">Название:</span>
-          <input v-model="catalogModalName" class="form-input" @keyup.enter="saveCatalogModal" />
+          <input v-model="catalogModalName" class="form-input" :disabled="savingCatalog" @keyup.enter="saveCatalogModal" />
         </label>
         <div class="modal-image-section">
           <p class="modal-image-label">Фото категории:</p>
           <div v-if="catalogModalImgPreview" class="modal-image-preview">
             <img :src="catalogModalImgPreview" alt="" />
-            <button class="modal-image-remove" @click="removeCatalogImg">&#10005;</button>
+            <button class="modal-image-remove" :disabled="savingCatalog" @click="removeCatalogImg">&#10005;</button>
           </div>
-          <label v-else class="upload-btn">
-            <input type="file" accept="image/*" hidden @change="onCatalogImgSelected" />
+          <label v-else class="upload-btn" :class="{ 'upload-btn--disabled': savingCatalog }">
+            <input type="file" accept="image/*" hidden :disabled="savingCatalog" @change="onCatalogImgSelected" />
             + Добавить фото
           </label>
         </div>
         <div class="form-actions" style="margin-top:20px">
-          <button class="btn btn--green"  @click="saveCatalogModal">{{ catalogModalMode === 'add' ? 'Добавить' : 'Сохранить' }}</button>
-          <button v-if="catalogModalMode === 'edit'" class="btn btn--red" @click="deleteCatalogInModal">Удалить</button>
-          <button class="btn btn--orange" @click="showCatalogModal = false">Отмена</button>
+          <button class="btn btn--green" :disabled="savingCatalog" @click="saveCatalogModal">
+            <span v-if="savingCatalog" class="btn-spinner"></span>
+            {{ savingCatalog ? 'Сохранение...' : (catalogModalMode === 'add' ? 'Добавить' : 'Сохранить') }}
+          </button>
+          <button v-if="catalogModalMode === 'edit'" class="btn btn--red" :disabled="savingCatalog" @click="deleteCatalogInModal">Удалить</button>
+          <button class="btn btn--orange" :disabled="savingCatalog" @click="showCatalogModal = false">Отмена</button>
         </div>
       </div>
     </div>
 
     <!-- SubCatalog modal -->
-    <div v-if="showSubModal" class="modal-backdrop" @click.self="showSubModal = false">
+    <div v-if="showSubModal" class="modal-backdrop" @click.self="!savingSub && (showSubModal = false)">
       <div class="modal">
         <h3 class="modal-title">{{ subModalMode === 'add' ? 'Добавить подкаталог' : 'Изменить подкаталог' }}</h3>
         <label class="form-row">
           <span class="form-label">Название:</span>
-          <input v-model="subModalName" class="form-input" @keyup.enter="saveSubModal" />
+          <input v-model="subModalName" class="form-input" :disabled="savingSub" @keyup.enter="saveSubModal" />
         </label>
         <div class="modal-image-section">
           <p class="modal-image-label">Фото подкатегории:</p>
           <div v-if="subModalImgPreview" class="modal-image-preview">
             <img :src="subModalImgPreview" alt="" />
-            <button class="modal-image-remove" @click="removeSubImg">&#10005;</button>
+            <button class="modal-image-remove" :disabled="savingSub" @click="removeSubImg">&#10005;</button>
           </div>
-          <label v-else class="upload-btn">
-            <input type="file" accept="image/*" hidden @change="onSubImgSelected" />
+          <label v-else class="upload-btn" :class="{ 'upload-btn--disabled': savingSub }">
+            <input type="file" accept="image/*" hidden :disabled="savingSub" @change="onSubImgSelected" />
             + Добавить фото
           </label>
         </div>
         <div class="form-actions" style="margin-top:20px">
-          <button class="btn btn--green"  @click="saveSubModal">{{ subModalMode === 'add' ? 'Добавить' : 'Сохранить' }}</button>
-          <button v-if="subModalMode === 'edit'" class="btn btn--red" @click="deleteSubInModal">Удалить</button>
-          <button class="btn btn--orange" @click="showSubModal = false">Отмена</button>
+          <button class="btn btn--green" :disabled="savingSub" @click="saveSubModal">
+            <span v-if="savingSub" class="btn-spinner"></span>
+            {{ savingSub ? 'Сохранение...' : (subModalMode === 'add' ? 'Добавить' : 'Сохранить') }}
+          </button>
+          <button v-if="subModalMode === 'edit'" class="btn btn--red" :disabled="savingSub" @click="deleteSubInModal">Удалить</button>
+          <button class="btn btn--orange" :disabled="savingSub" @click="showSubModal = false">Отмена</button>
         </div>
       </div>
     </div>
@@ -818,6 +870,10 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
 
 // --- buttons ---
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 30px;
   padding: 0 16px;
   border: none;
@@ -836,6 +892,33 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   &--red    { background: #e74c3c; color: white; }
 
   &--sm { height: 24px; padding: 0 10px; font-size: 12px; }
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: btn-spin 0.55s linear infinite;
+  flex-shrink: 0;
+
+  &--sm {
+    width: 10px;
+    height: 10px;
+    border-width: 1.5px;
+  }
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.upload-btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 // --- carousel ---
@@ -956,6 +1039,44 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   transition: border-color 0.15s, background 0.15s;
 
   &:hover { border-color: #f4b942; background: #fffbf0; }
+}
+
+// --- product filter bar ---
+.product-filter-bar {
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #fff3cd;
+  border: 1px solid #f4b942;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #7a5a00;
+
+  &--all {
+    background: #e8f5e9;
+    border-color: #2ecc40;
+    color: #1a6e29;
+  }
+
+  &__clear {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 11px;
+    color: inherit;
+    opacity: 0.7;
+    line-height: 1;
+    transition: opacity 0.15s;
+    &:hover { opacity: 1; }
+  }
 }
 
 // --- product cards ---

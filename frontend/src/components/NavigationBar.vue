@@ -245,6 +245,12 @@ const handleLogout = () => {
           </div>
           <template v-else>
             <div
+              class="catalog-item catalog-item--all"
+              @click="router.push('/catalog'); catalogOpen = false"
+            >
+              <span class="catalog-item__name">Все товары</span>
+            </div>
+            <div
               v-for="category in categories"
               :key="category.id"
               class="catalog-item"
@@ -392,6 +398,11 @@ const handleLogout = () => {
   &--active &__arrow {
     color: #f4b942;
     transform: translateX(2px);
+  }
+
+  &--all {
+    border-bottom: 1px solid #eee;
+    .catalog-item__name { color: #f4b942; font-weight: 600; }
   }
 }
 

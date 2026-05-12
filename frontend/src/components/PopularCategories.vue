@@ -24,7 +24,7 @@ const handleImageError = (e: Event) => {
 <template>
   <section class="popular-categories">
     <div class="popular-categories__header">
-      <h2 class="popular-categories__title">Популярные категории</h2>
+      <h2 class="popular-categories__title">Популярные каталоги</h2>
       <router-link to="/categories" class="popular-categories__all">
         Все категории →
       </router-link>

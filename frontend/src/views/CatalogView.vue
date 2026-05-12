@@ -28,7 +28,7 @@ const currentSubcatalog = computed(() =>
   currentCatalog.value?.subcategories?.find(s => s.slug === subcategorySlug.value)
 )
 
-const breadcrumbCategory    = computed(() => currentCatalog.value?.name    ?? categorySlug.value    ?? 'Каталог')
+const breadcrumbCategory    = computed(() => currentCatalog.value?.name    ?? categorySlug.value    ?? 'Все товары')
 const breadcrumbSubcategory = computed(() => currentSubcatalog.value?.name ?? subcategorySlug.value ?? '')
 
 async function loadProducts() {
