@@ -8,6 +8,7 @@ import com.example.webdev_hardware_store.service.ImageUploadService
 import com.example.webdev_hardware_store.service.ProductService
 import jakarta.persistence.criteria.JoinType
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
@@ -102,6 +103,7 @@ class AdminController(
 
     // ── Orders ──────────────────────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     @GetMapping("/orders")
     fun listOrders(
         @RequestParam(defaultValue = "0") page: Int,
@@ -142,7 +144,8 @@ class AdminController(
             spec = spec.and(toSpec) ?: spec
         }
 
-        return orderRepository.findAll(spec, pageable).map { toAdminDto(it) }
+        val page = orderRepository.findAll(spec, pageable)
+        return PageImpl(page.content.map { toAdminDto(it) }, pageable, page.totalElements)
     }
 
     @Transactional
