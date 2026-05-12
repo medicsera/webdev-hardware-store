@@ -1,13 +1,9 @@
 package com.example.webdev_hardware_store
 
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
-class WebdevHardwareStoreApplicationTests {
+class WebdevHardwareStoreApplicationTests : AbstractIntegrationTest() {
 
-	@Test
-	fun contextLoads() {
-	}
-
+    @Test
+    fun contextLoads() {}
 }

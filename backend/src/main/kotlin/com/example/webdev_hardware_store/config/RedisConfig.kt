@@ -3,13 +3,13 @@ package com.example.webdev_hardware_store.config
 import org.springframework.cache.annotation.CachingConfigurer
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.interceptor.CacheErrorHandler
-import org.springframework.cache.interceptor.SimpleCacheErrorHandler
+import org.springframework.cache.interceptor.LoggingCacheErrorHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.connection.RedisConnectionFactory
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.time.Duration
@@ -17,6 +17,12 @@ import java.time.Duration
 @Configuration
 @EnableCaching
 class RedisConfig : CachingConfigurer {
+
+    private val serializer: GenericJacksonJsonRedisSerializer =
+        GenericJacksonJsonRedisSerializer.builder()
+            .enableUnsafeDefaultTyping()
+            .customize { b -> b.findAndAddModules() }
+            .build()
 
     private fun cacheConfig(ttl: Duration): RedisCacheConfiguration =
         RedisCacheConfiguration.defaultCacheConfig()
@@ -26,7 +32,7 @@ class RedisConfig : CachingConfigurer {
                 RedisSerializationContext.SerializationPair.fromSerializer(StringRedisSerializer())
             )
             .serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(GenericJackson2JsonRedisSerializer())
+                RedisSerializationContext.SerializationPair.fromSerializer(serializer)
             )
 
     @Bean
@@ -42,6 +48,5 @@ class RedisConfig : CachingConfigurer {
             .transactionAware()
             .build()
 
-    // При недоступном Redis — логируем и идём в БД, не бросаем 500
-    override fun errorHandler(): CacheErrorHandler = SimpleCacheErrorHandler()
+    override fun errorHandler(): CacheErrorHandler = LoggingCacheErrorHandler()
 }

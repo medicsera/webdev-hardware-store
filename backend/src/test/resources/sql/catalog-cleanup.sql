@@ -1,0 +1,2 @@
+DELETE FROM sub_catalogs WHERE id IN (2000, 2001, 2002);
+DELETE FROM catalogs    WHERE id IN (1000, 1001);

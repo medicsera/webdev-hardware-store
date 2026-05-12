@@ -10,6 +10,9 @@ interface OrderRepository : JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o JOIN FETCH o.user ORDER BY o.createdAt DESC")
     fun findAllWithUserOrderByCreatedAtDesc(): List<Order>
 
+    @Query("SELECT o FROM Order o JOIN FETCH o.user WHERE o.id = :id")
+    fun findByIdWithUser(@org.springframework.data.repository.query.Param("id") id: Long): java.util.Optional<Order>
+
     // Возвращает catalog_id отсортированные по суммарному количеству заказанных позиций
     @Query(value = """
         SELECT p.catalog_id
