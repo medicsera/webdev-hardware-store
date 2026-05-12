@@ -15,10 +15,6 @@ export interface User {
 
 const TOKEN_KEY = 'auth_token'
 
-function applyToken(token: string) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-}
-
 function clearToken() {
     localStorage.removeItem(TOKEN_KEY)
     delete api.defaults.headers.common['Authorization']
@@ -33,15 +29,32 @@ export const useAuthStore = defineStore('auth', () => {
             const payload: any = jwtDecode(token)
             currentUser.value = {
                 id: payload.id,
-                firstName: payload.firstName ?? '',
-                lastName: payload.lastName ?? '',
-                phone: payload.phone ?? '',
                 email: payload.sub,
                 role: payload.role,
+                firstName: '',
+                lastName: '',
+                phone: '',
             }
-            applyToken(token)
         } catch (e) {
             console.error('Invalid token', e)
+        }
+    }
+
+    async function fetchProfile() {
+        try {
+            const { data } = await api.get('/buyer/profile')
+            if (currentUser.value) {
+                currentUser.value = {
+                    ...currentUser.value,
+                    firstName: data.firstName ?? '',
+                    lastName: data.lastName ?? '',
+                    phone: data.phone ?? '',
+                }
+            }
+        } catch {
+            // токен протух или недействителен — разлогиниваем
+            clearToken()
+            currentUser.value = null
         }
     }
 
@@ -51,6 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
             setUserFromToken(token)
             if (currentUser.value?.id) {
                 useCartStore().initForUser(String(currentUser.value.id))
+                fetchProfile()
             }
         }
     }
@@ -66,6 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
             if (currentUser.value?.id) {
                 useCartStore().initForUser(String(currentUser.value.id))
             }
+            await fetchProfile()
             return { success: true }
         } catch (err: any) {
             const msg = err?.response?.data?.message ?? 'Ошибка входа'
@@ -88,6 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
             if (currentUser.value?.id) {
                 useCartStore().initForUser(String(currentUser.value.id))
             }
+            await fetchProfile()
             return { success: true }
         } catch (err: any) {
             const msg = err?.response?.data?.message ?? 'Ошибка регистрации'
@@ -103,20 +119,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function updateProfile(data: { firstName?: string; lastName?: string; phone?: string; address?: string; email?: string; password?: string }) {
         if (!currentUser.value) return
-        try {
-            const token = localStorage.getItem(TOKEN_KEY) ?? ''
-            await api.put('/buyer/profile', data, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-            currentUser.value = {
-                ...currentUser.value,
-                firstName: data.firstName ?? currentUser.value.firstName,
-                lastName: data.lastName ?? currentUser.value.lastName,
-                phone: data.phone ?? currentUser.value.phone,
-            }
-        } catch (e) {
-            console.error('Profile update failed', e)
-        }
+        await api.put('/buyer/profile', data)
+        await fetchProfile()
     }
 
     return { currentUser, isAuthenticated, login, register, logout, updateProfile }
