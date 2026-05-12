@@ -9,6 +9,7 @@ export interface User {
     firstName: string
     lastName: string
     phone: string
+    address: string
     email: string
     role: string
 }
@@ -34,6 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
                 firstName: '',
                 lastName: '',
                 phone: '',
+                address: '',
             }
         } catch (e) {
             console.error('Invalid token', e)
@@ -49,6 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
                     firstName: data.firstName ?? '',
                     lastName: data.lastName ?? '',
                     phone: data.phone ?? '',
+                    address: data.address ?? '',
                 }
             }
         } catch {

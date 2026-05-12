@@ -9,6 +9,7 @@ const form = ref<ProfileData>({
   firstName: '',
   lastName: '',
   phone: '',
+  address: '',
   email: '',
   password: ''
 })
@@ -32,6 +33,7 @@ onMounted(() => {
       firstName: user.firstName,
       lastName: user.lastName,
       phone: user.phone,
+      address: user.address,
       email: user.email,
       password: ''
     }
@@ -71,6 +73,7 @@ const handleSubmit = async () => {
     firstName: form.value.firstName,
     lastName: form.value.lastName,
     phone: form.value.phone,
+    address: form.value.address,
     email: form.value.email,
     ...(form.value.password ? { password: form.value.password } : {})
   })
@@ -144,6 +147,17 @@ const startEditPassword = () => {
       >
         Изменить
       </button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-group__label" for="address">Адрес доставки:</label>
+      <input
+        id="address"
+        v-model="form.address"
+        type="text"
+        class="form-group__input"
+        placeholder="ул. Примерная, д. 1, кв. 10"
+      />
     </div>
 
     <div class="form-group">
