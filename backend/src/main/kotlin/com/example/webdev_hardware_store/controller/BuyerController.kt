@@ -83,10 +83,10 @@ class BuyerController(
             user.password ?: ""
         val newUsername: String = if (!data.email.isNullOrBlank()) data.email!! else user.username
         val updated = user.copy(
-            firstName = data.firstName,
-            lastName  = data.lastName,
-            address   = data.address,
-            phone     = data.phone,
+            firstName = if (data.firstName != null) data.firstName.takeIf { it.isNotBlank() } else user.firstName,
+            lastName  = if (data.lastName  != null) data.lastName.takeIf  { it.isNotBlank() } else user.lastName,
+            address   = if (data.address   != null) data.address.takeIf   { it.isNotBlank() } else user.address,
+            phone     = if (data.phone     != null) data.phone.takeIf     { it.isNotBlank() } else user.phone,
             password  = newPassword,
             username  = newUsername
         )
