@@ -4,11 +4,20 @@ import com.example.webdev_hardware_store.dto.ProductDto
 import com.example.webdev_hardware_store.repository.OrderRepository
 import com.example.webdev_hardware_store.service.ImageUploadService
 import com.example.webdev_hardware_store.service.ProductService
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.server.ResponseStatusException
+
+data class UpdateOrderStatusDto(val status: String)
+
+private val ALLOWED_ORDER_STATUSES = setOf(
+    "pending", "processing", "shipped", "delivered",
+    "ready_for_pickup", "picked_up", "cancelled"
+)
 
 data class AdminOrderItemDto(
     val id: Long,
@@ -92,10 +101,15 @@ class AdminController(
     @PatchMapping("/orders/{id}/status")
     fun updateOrderStatus(
         @PathVariable id: Long,
-        @RequestBody body: Map<String, String>
+        @RequestBody body: UpdateOrderStatusDto
     ): AdminOrderDto {
-        val order = orderRepository.findByIdWithUser(id).orElseThrow { IllegalArgumentException("Order not found") }
-        val newStatus = body["status"] ?: throw IllegalArgumentException("status required")
+        val newStatus = body.status
+        if (newStatus !in ALLOWED_ORDER_STATUSES) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Недопустимый статус: $newStatus")
+        }
+        val order = orderRepository.findByIdWithUser(id).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Заказ не найден")
+        }
         order.status = newStatus
         return toAdminDto(orderRepository.save(order))
     }
