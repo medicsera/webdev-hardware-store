@@ -27,6 +27,7 @@ const products    = ref<Product[]>([])
 const orders         = ref<AdminOrder[]>([])
 const ordersLoading  = ref(false)
 const expandedOrders = ref<Set<number>>(new Set())
+const collapsedDays  = ref<Set<string>>(new Set())
 
 // ── order filters ──
 const orderFilterUser     = ref('')
@@ -112,6 +113,11 @@ async function changeOrderStatus(order: AdminOrder, status: string) {
 function toggleExpand(id: number) {
   if (expandedOrders.value.has(id)) expandedOrders.value.delete(id)
   else expandedOrders.value.add(id)
+}
+
+function toggleDay(day: string) {
+  if (collapsedDays.value.has(day)) collapsedDays.value.delete(day)
+  else collapsedDays.value.add(day)
 }
 
 function formatOrderDate(iso: string) {
@@ -552,7 +558,11 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
 
             <div v-else class="orders-list">
               <template v-for="group in groupedOrders" :key="group.day">
-                <div class="orders-day-header">{{ formatDayHeader(group.day) }}</div>
+                <div class="orders-day-header" @click="toggleDay(group.day)">
+                  <span>{{ formatDayHeader(group.day) }} <span class="orders-day-count">({{ group.items.length }})</span></span>
+                  <span class="orders-day-chevron" :class="{ 'orders-day-chevron--collapsed': collapsedDays.has(group.day) }">▼</span>
+                </div>
+              <div v-show="!collapsedDays.has(group.day)" class="orders-day-body">
               <div v-for="order in group.items" :key="order.id" class="order-row">
                 <!-- Order header -->
                 <div class="order-row__head" @click="toggleExpand(order.id)">
@@ -603,6 +613,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                     <span class="order-footer__total">Итого: {{ formatOrderPrice(order.total) }}</span>
                   </div>
                 </div>
+              </div>
               </div>
               </template>
             </div>
@@ -1551,11 +1562,41 @@ select.form-input { height: 32px; }
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 10px 4px 4px;
+  padding: 10px 6px 6px;
   border-bottom: 1px solid #eee;
   margin-bottom: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  border-radius: 3px;
+  transition: background 0.15s;
 
   &:first-child { padding-top: 4px; }
+  &:hover { background: #f0f0f0; }
+}
+
+.orders-day-count {
+  font-weight: 400;
+  color: #aaa;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.orders-day-chevron {
+  font-size: 12px;
+  color: #bbb;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+
+  &--collapsed { transform: rotate(-90deg); }
+}
+
+.orders-day-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .orders-loading {
