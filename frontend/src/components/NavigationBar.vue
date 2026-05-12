@@ -324,7 +324,6 @@ const handleLogout = () => {
   border-radius: 10px;
   font-size: $default-size;
   background-color: $light-orange-color;
-  font-style: oblique;
   cursor: pointer;
   transition: background-color 0.2s;
 
