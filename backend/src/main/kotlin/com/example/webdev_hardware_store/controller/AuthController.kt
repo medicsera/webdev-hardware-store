@@ -58,7 +58,7 @@ class AuthController(
             authManager.authenticate(UsernamePasswordAuthenticationToken(req.username, req.password))
             rateLimiter.clear(ip)
             val user = userRepository.findByUsername(req.username)!!
-            val token = jwtUtil.generateToken(user.id, user.username, user.role, user.firstName, user.lastName, user.phone)
+            val token = jwtUtil.generateToken(user.id, user.username, user.role)
             ResponseEntity.ok(AuthResponse(token))
         } catch (e: AuthenticationException) {
             rateLimiter.recordFailure(ip)
@@ -84,7 +84,7 @@ class AuthController(
             phone = req.phone
         )
         val saved = userRepository.save(buyer)
-        val token = jwtUtil.generateToken(saved.id, saved.username, saved.role, saved.firstName, saved.lastName, saved.phone)
+        val token = jwtUtil.generateToken(saved.id, saved.username, saved.role)
         return ResponseEntity.ok(AuthResponse(token))
     }
 }

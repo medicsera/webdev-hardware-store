@@ -12,14 +12,7 @@ class JwtUtil(@Value("\${jwt.secret}") secret: String) {
 
     private val secretKey = Keys.hmacShaKeyFor(secret.toByteArray())
 
-    fun generateToken(
-        id: Long,
-        username: String,
-        role: String,
-        firstName: String? = null,
-        lastName: String? = null,
-        phone: String? = null
-    ): String {
+    fun generateToken(id: Long, username: String, role: String): String {
         val now = Date()
         val expiry = Date(now.time + 1000 * 60 * 60 * 24)
 
@@ -27,9 +20,6 @@ class JwtUtil(@Value("\${jwt.secret}") secret: String) {
             .setSubject(username)
             .claim("id", id)
             .claim("role", role)
-            .claim("firstName", firstName)
-            .claim("lastName", lastName)
-            .claim("phone", phone)
             .setIssuedAt(now)
             .setExpiration(expiry)
             .signWith(secretKey, SignatureAlgorithm.HS256)
