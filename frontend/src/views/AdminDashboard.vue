@@ -28,6 +28,50 @@ const orders         = ref<AdminOrder[]>([])
 const ordersLoading  = ref(false)
 const expandedOrders = ref<Set<number>>(new Set())
 
+// ── order filters ──
+const orderFilterUser     = ref('')
+const orderSortDir        = ref<'desc' | 'asc'>('desc')
+const orderFilterDateFrom = ref('')
+const orderFilterDateTo   = ref('')
+
+const filteredOrders = computed(() => {
+  let list = orders.value.slice()
+  const q = orderFilterUser.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter(o => {
+      const name = `${o.userFirstName ?? ''} ${o.userLastName ?? ''}`.trim().toLowerCase()
+      return name.includes(q) || o.userEmail.toLowerCase().includes(q)
+    })
+  }
+  if (orderFilterDateFrom.value) {
+    const from = new Date(orderFilterDateFrom.value + 'T00:00:00')
+    list = list.filter(o => new Date(o.createdAt) >= from)
+  }
+  if (orderFilterDateTo.value) {
+    const to = new Date(orderFilterDateTo.value + 'T23:59:59.999')
+    list = list.filter(o => new Date(o.createdAt) <= to)
+  }
+  list.sort((a, b) => {
+    const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    return orderSortDir.value === 'asc' ? diff : -diff
+  })
+  return list
+})
+
+const groupedOrders = computed(() => {
+  const groups = new Map<string, AdminOrder[]>()
+  for (const order of filteredOrders.value) {
+    const day = order.createdAt.slice(0, 10)
+    if (!groups.has(day)) groups.set(day, [])
+    groups.get(day)!.push(order)
+  }
+  return [...groups.entries()].map(([day, items]) => ({ day, items }))
+})
+
+function formatDayHeader(day: string) {
+  return new Date(day + 'T12:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 const STATUS_LABELS: Record<string, string> = {
   pending:          'Ожидает',
   processing:       'В обработке',
@@ -477,11 +521,39 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
               <button class="btn btn--green btn--sm" @click="loadOrders">&#8635; Обновить</button>
             </div>
 
+            <!-- Filter bar -->
+            <div v-if="!ordersLoading && orders.length > 0" class="orders-filter-bar">
+              <input
+                v-model="orderFilterUser"
+                class="orders-filter-input"
+                placeholder="Поиск по заказчику..."
+                type="text"
+              />
+              <div class="orders-filter-dates">
+                <input v-model="orderFilterDateFrom" class="orders-filter-date" type="date" title="С даты" />
+                <span class="orders-filter-sep">—</span>
+                <input v-model="orderFilterDateTo" class="orders-filter-date" type="date" title="По дату" />
+              </div>
+              <button
+                class="orders-sort-btn"
+                :title="orderSortDir === 'desc' ? 'Сначала новые' : 'Сначала старые'"
+                @click="orderSortDir = orderSortDir === 'desc' ? 'asc' : 'desc'"
+              >{{ orderSortDir === 'desc' ? '↓ Новые' : '↑ Старые' }}</button>
+              <button
+                v-if="orderFilterUser || orderFilterDateFrom || orderFilterDateTo"
+                class="btn btn--sm orders-reset-btn"
+                @click="orderFilterUser = ''; orderFilterDateFrom = ''; orderFilterDateTo = ''"
+              >✕ Сбросить</button>
+            </div>
+
             <div v-if="ordersLoading" class="orders-loading">Загрузка...</div>
             <div v-else-if="orders.length === 0" class="empty-hint" style="padding:20px 0">Заказов нет</div>
+            <div v-else-if="groupedOrders.length === 0" class="empty-hint" style="padding:20px 0">Нет заказов по выбранным фильтрам</div>
 
             <div v-else class="orders-list">
-              <div v-for="order in orders" :key="order.id" class="order-row">
+              <template v-for="group in groupedOrders" :key="group.day">
+                <div class="orders-day-header">{{ formatDayHeader(group.day) }}</div>
+              <div v-for="order in group.items" :key="order.id" class="order-row">
                 <!-- Order header -->
                 <div class="order-row__head" @click="toggleExpand(order.id)">
                   <span class="order-row__id">#{{ order.id }}</span>
@@ -532,6 +604,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                   </div>
                 </div>
               </div>
+              </template>
             </div>
           </div>
 
@@ -1406,6 +1479,85 @@ select.form-input { height: 32px; }
 .notif-leave-to     { opacity: 0; transform: translateY(-8px); }
 
 // ── orders ──────────────────────────────────────────────────────────────────
+.orders-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0 8px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+}
+
+.orders-filter-input {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: inherit;
+  flex: 1;
+  min-width: 150px;
+  max-width: 220px;
+  &:focus { outline: none; border-color: #f4b942; }
+}
+
+.orders-filter-dates {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.orders-filter-date {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: inherit;
+  width: 128px;
+  &:focus { outline: none; border-color: #f4b942; }
+}
+
+.orders-filter-sep {
+  font-size: 12px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.orders-sort-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: white;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+  &:hover { border-color: #f4b942; background: #fffbf0; }
+}
+
+.orders-reset-btn {
+  background: #eee;
+  color: #555;
+  &:hover:not(:disabled) { filter: brightness(0.92); }
+}
+
+.orders-day-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 4px 4px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 4px;
+
+  &:first-child { padding-top: 4px; }
+}
+
 .orders-loading {
   text-align: center;
   padding: 24px;
