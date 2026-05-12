@@ -114,28 +114,32 @@ class AdminController(
         val direction = if (sort == "asc") Sort.Direction.ASC else Sort.Direction.DESC
         val pageable  = PageRequest.of(page, size, Sort.by(direction, "createdAt"))
 
-        var spec = Specification.where<Order>(null)
+        // null predicate = no restriction (match all)
+        var spec = Specification<Order> { _, _, _ -> null }
 
         if (!search.isNullOrBlank()) {
             val q = "%${search.trim().lowercase()}%"
-            spec = spec.and { root, _, cb ->
+            val searchSpec = Specification<Order> { root, _, cb ->
                 val u = root.join<Order, User>("user", JoinType.LEFT)
                 cb.or(
                     cb.like(cb.lower(u.get("username")), q),
-                    cb.like(cb.lower(cb.coalesce(u.get("firstName"), "")), q),
-                    cb.like(cb.lower(cb.coalesce(u.get("lastName"), "")), q)
+                    cb.like(cb.lower(cb.coalesce(u.get<String?>("firstName"), "")), q),
+                    cb.like(cb.lower(cb.coalesce(u.get<String?>("lastName"), "")), q)
                 )
             }
+            spec = spec.and(searchSpec) ?: spec
         }
         if (dateFrom != null) {
-            spec = spec.and { root, _, cb ->
+            val fromSpec = Specification<Order> { root, _, cb ->
                 cb.greaterThanOrEqualTo(root.get("createdAt"), dateFrom.atStartOfDay())
             }
+            spec = spec.and(fromSpec) ?: spec
         }
         if (dateTo != null) {
-            spec = spec.and { root, _, cb ->
+            val toSpec = Specification<Order> { root, _, cb ->
                 cb.lessThan(root.get("createdAt"), dateTo.plusDays(1).atStartOfDay())
             }
+            spec = spec.and(toSpec) ?: spec
         }
 
         return orderRepository.findAll(spec, pageable).map { toAdminDto(it) }

@@ -28,5 +28,5 @@ interface OrderRepository : JpaRepository<Order, Long>, JpaSpecificationExecutor
 
     // Загружает user через EntityGraph вместо JOIN FETCH, чтобы корректно работала SQL-пагинация
     @EntityGraph(attributePaths = ["user"])
-    override fun findAll(spec: Specification<Order>?, pageable: Pageable): Page<Order>
+    override fun findAll(spec: Specification<Order>, pageable: Pageable): Page<Order>
 }
