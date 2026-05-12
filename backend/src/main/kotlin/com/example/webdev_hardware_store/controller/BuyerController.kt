@@ -2,6 +2,7 @@ package com.example.webdev_hardware_store.controller
 
 import com.example.webdev_hardware_store.config.CustomUserDetails
 import com.example.webdev_hardware_store.dto.UpdateBuyerDto
+import com.example.webdev_hardware_store.dto.UserProfileDto
 import com.example.webdev_hardware_store.model.Order
 import com.example.webdev_hardware_store.model.OrderItem
 import com.example.webdev_hardware_store.model.User
@@ -63,14 +64,14 @@ class BuyerController(
 ) {
 
     @GetMapping("/profile")
-    fun getProfile(@AuthenticationPrincipal principal: CustomUserDetails): User =
-        userRepository.findById(principal.id).orElseThrow()
+    fun getProfile(@AuthenticationPrincipal principal: CustomUserDetails): UserProfileDto =
+        userRepository.findById(principal.id).orElseThrow().toProfileDto()
 
     @PutMapping("/profile")
     fun updateProfile(
         @AuthenticationPrincipal principal: CustomUserDetails,
         @RequestBody data: UpdateBuyerDto
-    ): User {
+    ): UserProfileDto {
         val user = userRepository.findById(principal.id).orElseThrow()
         val newPassword: String = if (!data.password.isNullOrBlank())
             passwordEncoder.encode(data.password!!) ?: ""
@@ -85,7 +86,7 @@ class BuyerController(
             password  = newPassword,
             username  = newUsername
         )
-        return userRepository.save(updated)
+        return userRepository.save(updated).toProfileDto()
     }
 
     @Transactional
@@ -146,6 +147,16 @@ class BuyerController(
     @GetMapping("/orders")
     fun getOrders(@AuthenticationPrincipal principal: CustomUserDetails): List<OrderResponse> =
         orderRepository.findByUserIdOrderByCreatedAtDesc(principal.id).map { toResponse(it) }
+
+    private fun User.toProfileDto() = UserProfileDto(
+        id        = id,
+        email     = username,
+        firstName = firstName,
+        lastName  = lastName,
+        phone     = phone,
+        address   = address,
+        role      = role,
+    )
 
     private fun toResponse(order: Order) = OrderResponse(
         id              = order.id,
