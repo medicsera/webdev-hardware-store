@@ -15,13 +15,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfigurationSource
 
 @Configuration
 @EnableMethodSecurity
 class SecurityConfig(
     private val jwtUtil: JwtUtil,
     private val userDetailsService: CustomUserDetailsService,
-    private val jwtAuthFilter: JwtAuthenticationFilter
+    private val jwtAuthFilter: JwtAuthenticationFilter,
+    private val corsConfigurationSource: CorsConfigurationSource
 ) {
 
     @Bean
@@ -42,6 +44,7 @@ class SecurityConfig(
     @Bean
     fun filterChain(http: org.springframework.security.config.annotation.web.builders.HttpSecurity): SecurityFilterChain {
         http
+            .cors { it.configurationSource(corsConfigurationSource) }
             // CSRF не нужен: токен хранится в localStorage и передаётся через
             // Authorization: Bearer — браузер не добавляет его автоматически,
             // поэтому cross-site запросы с чужого домена не проходят аутентификацию.
