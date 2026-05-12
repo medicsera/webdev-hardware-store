@@ -23,10 +23,6 @@ class PublicCatalogController(
     @Cacheable(value = ["categories"], key = "'all'")
     fun getAll(): List<CategoryTreeDto> = popularCategoryService.buildTree()
 
-    @GetMapping("/tree")
-    @Cacheable(value = ["categories"], key = "'all'")
-    fun getTree(): List<CategoryTreeDto> = popularCategoryService.buildTree()
-
     @GetMapping("/popular")
     fun getPopular(@RequestParam(defaultValue = "6") limit: Int): List<CategoryTreeDto> =
         popularCategoryService.getPopular(limit)
