@@ -42,6 +42,9 @@ class SecurityConfig(
     @Bean
     fun filterChain(http: org.springframework.security.config.annotation.web.builders.HttpSecurity): SecurityFilterChain {
         http
+            // CSRF не нужен: токен хранится в localStorage и передаётся через
+            // Authorization: Bearer — браузер не добавляет его автоматически,
+            // поэтому cross-site запросы с чужого домена не проходят аутентификацию.
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
