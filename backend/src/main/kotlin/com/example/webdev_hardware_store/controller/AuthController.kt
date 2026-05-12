@@ -1,8 +1,10 @@
 package com.example.webdev_hardware_store.controller
 
 import com.example.webdev_hardware_store.config.JwtUtil
+import com.example.webdev_hardware_store.config.LoginRateLimiter
 import com.example.webdev_hardware_store.model.User
 import com.example.webdev_hardware_store.repository.UserRepository
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
@@ -36,20 +38,37 @@ class AuthController(
     private val authManager: AuthenticationManager,
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtUtil: JwtUtil
+    private val jwtUtil: JwtUtil,
+    private val rateLimiter: LoginRateLimiter,
 ) {
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody req: LoginRequest): ResponseEntity<*> {
+    fun login(
+        @Valid @RequestBody req: LoginRequest,
+        servletRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val ip = resolveIp(servletRequest)
+
+        if (rateLimiter.isBlocked(ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(ErrorResponse("Слишком много попыток входа. Попробуйте через 15 минут"))
+        }
+
         return try {
             authManager.authenticate(UsernamePasswordAuthenticationToken(req.username, req.password))
+            rateLimiter.clear(ip)
             val user = userRepository.findByUsername(req.username)!!
             val token = jwtUtil.generateToken(user.id, user.username, user.role, user.firstName, user.lastName, user.phone)
             ResponseEntity.ok(AuthResponse(token))
         } catch (e: AuthenticationException) {
+            rateLimiter.recordFailure(ip)
             ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse("Неверная почта или пароль"))
         }
     }
+
+    private fun resolveIp(request: HttpServletRequest): String =
+        request.getHeader("X-Forwarded-For")?.split(",")?.firstOrNull()?.trim()
+            ?: request.remoteAddr
 
     @PostMapping("/register")
     fun register(@Valid @RequestBody req: RegisterRequest): ResponseEntity<*> {
