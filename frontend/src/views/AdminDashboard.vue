@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import api from '@/api/auth'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 interface Catalog    { id: number; name: string; slug: string; imageUrl?: string }
 interface SubCatalog { id: number; catalogId: number; name: string; slug: string; imageUrl?: string }
@@ -530,7 +530,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
           <div v-if="activeTab === 'orders'" class="section-box">
             <div class="section-header">
               <h3 class="section-title">Заказы</h3>
-              <button class="btn btn--green btn--sm" @click="loadOrders">&#8635; Обновить</button>
+              <button class="btn btn--green btn--sm" @click="loadOrders()">&#8635; Обновить</button>
             </div>
 
             <!-- Filter bar -->
