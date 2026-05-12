@@ -45,7 +45,7 @@ const routes: RouteRecordRaw[] = [
         path: '/cart',
         name: 'cart',
         component: () => import('@/views/CartView.vue'),
-        meta: { title: "Корзина" }
+        meta: { title: "Корзина", requiresAuth: true }
     },
     {
         path: '/search',
@@ -69,7 +69,7 @@ const routes: RouteRecordRaw[] = [
         path: '/profile',
         name: 'profile',
         component: () => import('@/views/ProfileView.vue'),
-        meta: { title: "Профиль" }
+        meta: { title: "Профиль", requiresAuth: true }
     },
     {
         path: '/admin',
@@ -88,10 +88,17 @@ const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
     const store = useAuthStore()
-    if (to.meta.requiresAdmin && store.currentUser?.role !== 'ADMIN') {
-        // non‑admin users are sent back to home
-        return next('/')
+
+    if (to.meta.requiresAdmin) {
+        if (!store.isAuthenticated) return next({ name: 'login', query: { redirect: to.fullPath } })
+        if (store.currentUser?.role !== 'ADMIN') return next('/')
+        return next()
     }
+
+    if (to.meta.requiresAuth && !store.isAuthenticated) {
+        return next({ name: 'login', query: { redirect: to.fullPath } })
+    }
+
     next()
 })
 export default router
