@@ -16,7 +16,7 @@ services:
     build: .
     container_name: hardware-store-backend
     environment:
-      - JWT_SECRET=ChangeMeInProd123
+      - JWT_SECRET=ChangeMeInProduction_ReplaceWithStrongSecret32plus
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/hardware_store
       - SPRING_DATASOURCE_USERNAME=store_user
       - SPRING_DATASOURCE_PASSWORD=store_pass
