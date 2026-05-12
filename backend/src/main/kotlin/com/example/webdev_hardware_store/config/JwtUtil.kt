@@ -3,13 +3,14 @@ package com.example.webdev_hardware_store.config
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.*
 
 @Component
-class JwtUtil {
+class JwtUtil(@Value("\${jwt.secret}") secret: String) {
 
-    private val secretKey = Keys.hmacShaKeyFor("VerySecretKeyChangeMeTo32BytesOrMore!".toByteArray())
+    private val secretKey = Keys.hmacShaKeyFor(secret.toByteArray())
 
     fun generateToken(
         id: Long,
