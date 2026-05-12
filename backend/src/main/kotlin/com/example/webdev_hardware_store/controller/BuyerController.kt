@@ -10,6 +10,10 @@ import com.example.webdev_hardware_store.repository.OrderRepository
 import com.example.webdev_hardware_store.repository.ProductRepository
 import com.example.webdev_hardware_store.repository.UserRepository
 import jakarta.transaction.Transactional
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.PositiveOrZero
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -22,14 +26,14 @@ import java.math.BigDecimal
 
 data class CreateOrderItemDto(
     val productId: Long,
-    val quantity: Int
+    @field:Min(1) val quantity: Int,
 )
 
 data class CreateOrderDto(
-    val items: List<CreateOrderItemDto>,
-    val deliveryCost: Double,
+    @field:NotEmpty @field:Valid val items: List<CreateOrderItemDto>,
+    @field:PositiveOrZero val deliveryCost: Double,
     val deliveryMethod: String? = null,
-    val deliveryAddress: String? = null
+    val deliveryAddress: String? = null,
 )
 
 data class OrderItemResponse(
@@ -94,7 +98,7 @@ class BuyerController(
     @PostMapping("/orders")
     fun createOrder(
         @AuthenticationPrincipal principal: CustomUserDetails,
-        @RequestBody dto: CreateOrderDto
+        @Valid @RequestBody dto: CreateOrderDto
     ): OrderResponse {
         val user = userRepository.findById(principal.id).orElseThrow()
 

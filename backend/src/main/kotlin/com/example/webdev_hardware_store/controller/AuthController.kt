@@ -3,6 +3,10 @@ package com.example.webdev_hardware_store.controller
 import com.example.webdev_hardware_store.config.JwtUtil
 import com.example.webdev_hardware_store.model.User
 import com.example.webdev_hardware_store.repository.UserRepository
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
@@ -11,13 +15,17 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
 
-data class LoginRequest(val username: String, val password: String)
+data class LoginRequest(
+    @field:NotBlank @field:Email val username: String,
+    @field:NotBlank val password: String,
+)
+
 data class RegisterRequest(
-    val username: String,
-    val password: String,
+    @field:NotBlank @field:Email val username: String,
+    @field:NotBlank @field:Size(min = 6, max = 100) val password: String,
     val firstName: String? = null,
     val lastName: String? = null,
-    val phone: String? = null
+    val phone: String? = null,
 )
 data class AuthResponse(val token: String)
 data class ErrorResponse(val message: String)
@@ -32,7 +40,7 @@ class AuthController(
 ) {
 
     @PostMapping("/login")
-    fun login(@RequestBody req: LoginRequest): ResponseEntity<*> {
+    fun login(@Valid @RequestBody req: LoginRequest): ResponseEntity<*> {
         return try {
             authManager.authenticate(UsernamePasswordAuthenticationToken(req.username, req.password))
             val user = userRepository.findByUsername(req.username)!!
@@ -44,7 +52,7 @@ class AuthController(
     }
 
     @PostMapping("/register")
-    fun register(@RequestBody req: RegisterRequest): ResponseEntity<*> {
+    fun register(@Valid @RequestBody req: RegisterRequest): ResponseEntity<*> {
         if (userRepository.findByUsername(req.username) != null) {
             return ResponseEntity.badRequest().body(ErrorResponse("Пользователь с такой почтой уже зарегистрирован"))
         }
