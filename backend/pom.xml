@@ -165,13 +165,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <environmentVariables>
-                        <DOCKER_HOST>npipe:////./pipe/docker_engine_linux</DOCKER_HOST>
-                        <DOCKER_API_VERSION>1.44</DOCKER_API_VERSION>
-                        <TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE>/var/run/docker.sock</TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE>
+                        <TESTCONTAINERS_HOST_OVERRIDE>localhost</TESTCONTAINERS_HOST_OVERRIDE>
                     </environmentVariables>
-                    <systemPropertyVariables>
-                        <docker.apiVersion>1.44</docker.apiVersion>
-                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 

@@ -9,16 +9,16 @@ import org.springframework.test.context.jdbc.Sql
 class CatalogIntegrationTest : AbstractIntegrationTest() {
 
     @Test
-    fun `GET categories tree возвращает 200 и непустой массив`() {
-        assertThat(mvc.get().uri("/categories/tree"))
+    fun `GET categories возвращает 200 и непустой массив`() {
+        assertThat(mvc.get().uri("/categories"))
             .hasStatusOk()
             .bodyJson()
             .hasPath("$[0]")
     }
 
     @Test
-    fun `GET categories tree содержит поле subcategories`() {
-        assertThat(mvc.get().uri("/categories/tree"))
+    fun `GET categories содержит поле subcategories`() {
+        assertThat(mvc.get().uri("/categories"))
             .hasStatusOk()
             .bodyJson()
             .hasPath("$[0].subcategories")
