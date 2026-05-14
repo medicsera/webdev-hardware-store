@@ -1,5 +1,6 @@
 package com.example.webdev_hardware_store.config
 
+import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -12,11 +13,15 @@ data class ApiError(val message: String)
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     @ExceptionHandler(DataIntegrityViolationException::class)
     fun handleDuplicate(e: DataIntegrityViolationException): ResponseEntity<ApiError> =
         ResponseEntity.status(HttpStatus.CONFLICT).body(ApiError("Такой элемент уже существует"))
 
     @ExceptionHandler(IOException::class)
-    fun handleIo(e: IOException): ResponseEntity<ApiError> =
-        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiError("Ошибка при работе с файлом: ${e.message}"))
+    fun handleIo(e: IOException): ResponseEntity<ApiError> {
+        logger.error("IO error during file operation", e)
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiError("Ошибка при работе с файлом"))
+    }
 }

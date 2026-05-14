@@ -49,6 +49,18 @@ class SecurityConfig(
             // Authorization: Bearer — браузер не добавляет его автоматически,
             // поэтому cross-site запросы с чужого домена не проходят аутентификацию.
             .csrf { it.disable() }
+            .headers { headers ->
+                headers.contentSecurityPolicy {
+                    it.policyDirectives(
+                        "default-src 'self'; " +
+                        "img-src 'self' data: blob:; " +
+                        "style-src 'self' 'unsafe-inline'; " +
+                        "font-src 'self' data:; " +
+                        "connect-src 'self'; " +
+                        "frame-ancestors 'none'"
+                    )
+                }
+            }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it

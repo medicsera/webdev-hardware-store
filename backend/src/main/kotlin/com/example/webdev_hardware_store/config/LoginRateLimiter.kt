@@ -8,21 +8,24 @@ import java.time.Duration
 class LoginRateLimiter(private val redis: StringRedisTemplate) {
 
     companion object {
-        private const val MAX_ATTEMPTS = 10
-        private val WINDOW = Duration.ofMinutes(15)
+        private const val LOGIN_MAX    = 10
+        private const val REGISTER_MAX = 5
+        private val LOGIN_WINDOW    = Duration.ofMinutes(15)
+        private val REGISTER_WINDOW = Duration.ofHours(1)
     }
 
-    fun isBlocked(ip: String): Boolean {
-        val count = redis.opsForValue().get(key(ip))?.toLongOrNull() ?: 0L
-        return count >= MAX_ATTEMPTS
+    fun isBlocked(ip: String)     = count("login:attempts:$ip")    >= LOGIN_MAX
+    fun recordFailure(ip: String) = increment("login:attempts:$ip", LOGIN_WINDOW)
+    fun clear(ip: String)         { redis.delete("login:attempts:$ip") }
+
+    fun isRegisterBlocked(ip: String) = count("register:attempts:$ip") >= REGISTER_MAX
+    fun recordRegister(ip: String)    = increment("register:attempts:$ip", REGISTER_WINDOW)
+
+    private fun count(key: String): Long =
+        redis.opsForValue().get(key)?.toLongOrNull() ?: 0L
+
+    private fun increment(key: String, window: Duration) {
+        val n = redis.opsForValue().increment(key) ?: 1L
+        if (n == 1L) redis.expire(key, window)
     }
-
-    fun recordFailure(ip: String) {
-        val count = redis.opsForValue().increment(key(ip)) ?: 1L
-        if (count == 1L) redis.expire(key(ip), WINDOW)
-    }
-
-    fun clear(ip: String) = redis.delete(key(ip))
-
-    private fun key(ip: String) = "login:attempts:$ip"
 }

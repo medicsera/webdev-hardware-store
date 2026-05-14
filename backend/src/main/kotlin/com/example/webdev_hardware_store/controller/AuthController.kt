@@ -66,12 +66,22 @@ class AuthController(
         }
     }
 
+    // nginx добавляет реальный IP последним в цепочке X-Forwarded-For,
+    // поэтому берём последний элемент — он не может быть подделан клиентом.
     private fun resolveIp(request: HttpServletRequest): String =
-        request.getHeader("X-Forwarded-For")?.split(",")?.firstOrNull()?.trim()
+        request.getHeader("X-Forwarded-For")?.split(",")?.lastOrNull()?.trim()
             ?: request.remoteAddr
 
     @PostMapping("/register")
-    fun register(@Valid @RequestBody req: RegisterRequest): ResponseEntity<*> {
+    fun register(
+        @Valid @RequestBody req: RegisterRequest,
+        servletRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val ip = resolveIp(servletRequest)
+        if (rateLimiter.isRegisterBlocked(ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(ErrorResponse("Слишком много регистраций. Попробуйте через час"))
+        }
         if (userRepository.findByUsername(req.username) != null) {
             return ResponseEntity.badRequest().body(ErrorResponse("Пользователь с такой почтой уже зарегистрирован"))
         }
@@ -84,6 +94,7 @@ class AuthController(
             phone = req.phone
         )
         val saved = userRepository.save(buyer)
+        rateLimiter.recordRegister(ip)
         val token = jwtUtil.generateToken(saved.id, saved.username, saved.role)
         return ResponseEntity.ok(AuthResponse(token))
     }

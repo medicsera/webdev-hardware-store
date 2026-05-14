@@ -54,7 +54,10 @@ class ImageUploadService(
 
     fun delete(imageUrl: String) {
         val filename = imageUrl.removePrefix("/uploads/products/")
-        File(uploadDir, "products/$filename").delete()
+        val base     = File(uploadDir, "products").canonicalFile
+        val resolved = File(uploadDir, "products/$filename").canonicalFile
+        if (!resolved.startsWith(base)) return
+        resolved.delete()
     }
 
     private fun matchesMagicBytes(bytes: ByteArray, mimeType: String): Boolean {

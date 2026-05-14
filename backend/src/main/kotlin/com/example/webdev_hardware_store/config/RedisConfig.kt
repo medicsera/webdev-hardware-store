@@ -1,5 +1,8 @@
 package com.example.webdev_hardware_store.config
 
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator
 import org.springframework.cache.annotation.CachingConfigurer
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.interceptor.CacheErrorHandler
@@ -11,6 +14,7 @@ import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer
 import org.springframework.data.redis.serializer.RedisSerializationContext
+import org.springframework.data.redis.serializer.RedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.time.Duration
 
@@ -18,11 +22,20 @@ import java.time.Duration
 @EnableCaching
 class RedisConfig : CachingConfigurer {
 
-    private val serializer: GenericJacksonJsonRedisSerializer =
-        GenericJacksonJsonRedisSerializer.builder()
-            .enableUnsafeDefaultTyping()
-            .customize { b -> b.findAndAddModules() }
+    private val mapper: ObjectMapper = run {
+        val validator = BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType("com.example.webdev_hardware_store")
+            .allowIfSubType("java.util")
+            .allowIfSubType("java.lang")
             .build()
+        JsonMapper.builder()
+            .activateDefaultTyping(validator)
+            .findAndAddModules()
+            .build()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private val serializer: RedisSerializer<Any> = GenericJacksonJsonRedisSerializer(mapper) as RedisSerializer<Any>
 
     private fun cacheConfig(ttl: Duration): RedisCacheConfiguration =
         RedisCacheConfiguration.defaultCacheConfig()

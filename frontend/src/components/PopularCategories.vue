@@ -55,7 +55,7 @@ const handleImageError = (e: Event) => {
         >
           <div class="category-card__image-wrapper">
             <img
-                :src="category.imageUrl || '/images/placeholder-product.jpg'"
+                :src="category.imageUrl || '/placeholder-product.jpg'"
                 :alt="category.name"
                 class="category-card__image"
                 loading="lazy"
