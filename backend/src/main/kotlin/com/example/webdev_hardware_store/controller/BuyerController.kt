@@ -184,6 +184,7 @@ class BuyerController(
         if (order.status != "pending")
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Отменить можно только заказ со статусом «Ожидает»")
         order.status = "cancelled"
+        order.cancelledBy = "user"
         return toResponse(orderRepository.save(order))
     }
 

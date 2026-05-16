@@ -47,6 +47,7 @@ data class AdminOrderDto(
     val deliveryMethod: String,
     val deliveryAddress: String?,
     val status: String,
+    val cancelledBy: String?,
     val createdAt: String,
     val userEmail: String,
     val userFirstName: String?,
@@ -172,7 +173,12 @@ class AdminController(
         val order = orderRepository.findByIdWithUser(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Заказ не найден")
         }
+        if (order.cancelledBy == "user") {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Нельзя изменить статус заказа, отменённого пользователем")
+        }
         order.status = newStatus
+        if (newStatus == "cancelled") order.cancelledBy = "admin"
+        else order.cancelledBy = null
         return toAdminDto(orderRepository.save(order))
     }
 
@@ -183,6 +189,7 @@ class AdminController(
         deliveryMethod  = order.deliveryMethod,
         deliveryAddress = order.deliveryAddress,
         status          = order.status,
+        cancelledBy     = order.cancelledBy,
         createdAt       = order.createdAt.toString(),
         userEmail    = order.user.username,
         userFirstName = order.user.firstName,

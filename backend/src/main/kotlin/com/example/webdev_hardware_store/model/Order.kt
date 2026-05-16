@@ -29,6 +29,9 @@ class Order(
     @Column(nullable = false)
     var status: String = "pending",
 
+    @Column(name = "cancelled_by")
+    var cancelledBy: String? = null,
+
     @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 

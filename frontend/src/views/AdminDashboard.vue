@@ -10,7 +10,7 @@ interface Notification { id: number; msg: string; type: 'error' | 'success' | 'i
 
 interface AdminOrderItem { id: number; productId: number; name: string; price: number; quantity: number; imageUrl: string | null }
 interface AdminOrder {
-  id: number; total: number; deliveryCost: number; status: string; createdAt: string
+  id: number; total: number; deliveryCost: number; status: string; cancelledBy: string | null; createdAt: string
   deliveryMethod: string; deliveryAddress: string | null
   userEmail: string; userFirstName: string | null; userLastName: string | null; userPhone: string | null
   items: AdminOrderItem[]
@@ -596,10 +596,12 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                   </span>
                   <span class="order-row__total">{{ formatOrderPrice(order.total) }}</span>
                   <div class="order-row__status-wrap" @click.stop>
+                    <span v-if="order.cancelledBy === 'user'" class="order-cancelled-by-user">Отменён пользователем</span>
                     <select
                       class="order-status-select"
                       :class="`order-status-select--${order.status}`"
                       :value="order.status"
+                      :disabled="order.cancelledBy === 'user'"
                       @change="changeOrderStatus(order, ($event.target as HTMLSelectElement).value)"
                     >
                       <option v-for="[val, label] in orderStatusOptions(order)" :key="val" :value="val">{{ label }}</option>
@@ -1750,6 +1752,19 @@ select.form-input { height: 32px; }
   }
 }
 
+.order-cancelled-by-user {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #fce4ec;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .order-status-select {
   height: 26px;
   padding: 0 6px;
@@ -1759,6 +1774,7 @@ select.form-input { height: 32px; }
   cursor: pointer;
   outline: none;
   transition: border-color 0.15s;
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
   &:focus { border-color: #f4b942; }
 
   &--pending           { background: #fff8e1; color: #795548; }
