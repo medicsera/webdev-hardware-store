@@ -43,6 +43,15 @@ const fetchProduct = async () => {
 watch(() => route.params.id, fetchProduct)
 onMounted(fetchProduct)
 
+const imageCount = computed(() => product.value?.imageUrls.length ?? 0)
+
+function prevImage() {
+  activeImage.value = (activeImage.value - 1 + imageCount.value) % imageCount.value
+}
+function nextImage() {
+  activeImage.value = (activeImage.value + 1) % imageCount.value
+}
+
 const maxStock = computed(() => product.value?.quantity ?? Infinity)
 
 const clampQuantity = () => {
@@ -92,6 +101,19 @@ const handleAddToCart = () => {
         <div class="product-gallery">
           <div class="product-image">
             <img :src="imageUrl" :alt="product.name" />
+            <template v-if="product.imageUrls.length > 1">
+              <button class="gallery-arrow gallery-arrow--left" @click.stop="prevImage" aria-label="Предыдущее фото">&#8249;</button>
+              <button class="gallery-arrow gallery-arrow--right" @click.stop="nextImage" aria-label="Следующее фото">&#8250;</button>
+              <div class="gallery-dots">
+                <span
+                  v-for="(_, i) in product.imageUrls"
+                  :key="i"
+                  class="gallery-dot"
+                  :class="{ 'gallery-dot--active': activeImage === i }"
+                  @click.stop="activeImage = i"
+                ></span>
+              </div>
+            </template>
           </div>
           <div v-if="product.imageUrls.length > 1" class="product-thumbnails">
             <button
@@ -251,6 +273,7 @@ const handleAddToCart = () => {
 }
 
 .product-image {
+  position: relative;
   width: 520px;
   height: 380px;
   background: #ddd;
@@ -263,6 +286,58 @@ const handleAddToCart = () => {
     object-fit: cover;
     display: block;
   }
+
+  &:hover .gallery-arrow { opacity: 1; }
+}
+
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.45);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 2;
+
+  &--left  { left: 10px; }
+  &--right { right: 10px; }
+  &:hover  { background: rgba(0, 0, 0, 0.7); }
+}
+
+.gallery-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.gallery-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+
+  &--active {
+    background: white;
+    transform: scale(1.25);
+  }
+  &:hover { background: rgba(255, 255, 255, 0.85); }
 }
 
 .product-thumbnails {
