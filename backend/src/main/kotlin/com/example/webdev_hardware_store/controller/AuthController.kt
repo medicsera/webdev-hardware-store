@@ -15,6 +15,8 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.crypto.password.PasswordEncoder
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 
 data class LoginRequest(
@@ -32,6 +34,7 @@ data class RegisterRequest(
 data class AuthResponse(val token: String)
 data class ErrorResponse(val message: String)
 
+@Tag(name = "Аутентификация", description = "Регистрация и вход")
 @RestController
 @RequestMapping("/auth")
 class AuthController(
@@ -42,6 +45,7 @@ class AuthController(
     private val rateLimiter: LoginRateLimiter,
 ) {
 
+    @Operation(summary = "Войти в аккаунт", description = "Возвращает JWT-токен")
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody req: LoginRequest,
@@ -72,6 +76,7 @@ class AuthController(
         request.getHeader("X-Forwarded-For")?.split(",")?.lastOrNull()?.trim()
             ?: request.remoteAddr
 
+    @Operation(summary = "Зарегистрировать нового пользователя")
     @PostMapping("/register")
     fun register(
         @Valid @RequestBody req: RegisterRequest,

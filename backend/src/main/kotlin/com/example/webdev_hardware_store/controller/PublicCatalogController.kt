@@ -2,6 +2,7 @@ package com.example.webdev_hardware_store.controller
 
 import com.example.webdev_hardware_store.service.PopularCategoryService
 import org.springframework.cache.annotation.Cacheable
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 
 data class SubcategoryDto(val id: Long, val name: String, val slug: String)
@@ -14,6 +15,7 @@ data class CategoryTreeDto(
     val subcategories: List<SubcategoryDto>
 )
 
+@Tag(name = "Категории", description = "Публичное дерево категорий и популярные категории")
 @RestController
 @RequestMapping("/categories")
 class PublicCatalogController(

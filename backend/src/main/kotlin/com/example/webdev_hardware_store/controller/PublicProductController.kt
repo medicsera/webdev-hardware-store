@@ -6,8 +6,10 @@ import com.example.webdev_hardware_store.service.ProductService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 
+@Tag(name = "Товары", description = "Публичный каталог товаров")
 @RestController
 @RequestMapping("/products")
 class PublicProductController(

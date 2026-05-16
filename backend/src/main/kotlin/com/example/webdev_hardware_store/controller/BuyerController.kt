@@ -18,6 +18,8 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.crypto.password.PasswordEncoder
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
@@ -58,6 +60,8 @@ data class OrderResponse(
 
 // ── Controller ─────────────────────────────────────────────────────────────
 
+@Tag(name = "Покупатель", description = "Профиль и заказы авторизованного покупателя")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/buyer")
 class BuyerController(

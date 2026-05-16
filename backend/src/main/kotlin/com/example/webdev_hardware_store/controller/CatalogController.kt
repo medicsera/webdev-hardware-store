@@ -8,12 +8,16 @@ import com.example.webdev_hardware_store.service.ImageUploadService
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
 data class CatalogRequest(val name: String, val slug: String)
 data class SubCatalogRequest(val name: String, val slug: String, val catalogId: Long)
 
+@Tag(name = "Администратор — каталоги", description = "Управление каталогами и подкаталогами (только ADMIN)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/admin")
 class CatalogController(
