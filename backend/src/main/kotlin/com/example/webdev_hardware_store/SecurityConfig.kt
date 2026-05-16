@@ -53,6 +53,7 @@ class SecurityConfig(
                 headers.contentSecurityPolicy {
                     it.policyDirectives(
                         "default-src 'self'; " +
+                        "script-src 'self' 'unsafe-inline'; " +
                         "img-src 'self' data: blob:; " +
                         "style-src 'self' 'unsafe-inline'; " +
                         "font-src 'self' data:; " +
@@ -70,6 +71,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                     .requestMatchers("/error").permitAll()
                     .requestMatchers("/actuator/health", "/actuator/info", "/actuator/metrics").permitAll()
+                    .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                     .requestMatchers("/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
             }
