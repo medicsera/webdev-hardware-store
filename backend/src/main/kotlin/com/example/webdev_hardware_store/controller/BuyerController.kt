@@ -156,6 +156,37 @@ class BuyerController(
     fun getOrders(@AuthenticationPrincipal principal: CustomUserDetails): List<OrderResponse> =
         orderRepository.findByUserIdOrderByCreatedAtDesc(principal.id).map { toResponse(it) }
 
+    @Transactional
+    @GetMapping("/orders/{id}")
+    fun getOrder(
+        @AuthenticationPrincipal principal: CustomUserDetails,
+        @PathVariable id: Long
+    ): OrderResponse {
+        val order = orderRepository.findByIdWithUser(id).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Заказ не найден")
+        }
+        if (order.user.id != principal.id)
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа к заказу")
+        return toResponse(order)
+    }
+
+    @Transactional
+    @PatchMapping("/orders/{id}/cancel")
+    fun cancelOrder(
+        @AuthenticationPrincipal principal: CustomUserDetails,
+        @PathVariable id: Long
+    ): OrderResponse {
+        val order = orderRepository.findByIdWithUser(id).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Заказ не найден")
+        }
+        if (order.user.id != principal.id)
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа к заказу")
+        if (order.status != "pending")
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Отменить можно только заказ со статусом «Ожидает»")
+        order.status = "cancelled"
+        return toResponse(orderRepository.save(order))
+    }
+
     private fun User.toProfileDto() = UserProfileDto(
         id        = id,
         email     = username,

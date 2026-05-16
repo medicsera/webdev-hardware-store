@@ -115,7 +115,8 @@ class AdminController(
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dateFrom: LocalDate?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) dateTo: LocalDate?,
-        @RequestParam(defaultValue = "desc") sort: String
+        @RequestParam(defaultValue = "desc") sort: String,
+        @RequestParam(required = false) status: String?
     ): Page<AdminOrderDto> {
         val direction = if (sort == "asc") Sort.Direction.ASC else Sort.Direction.DESC
         val pageable  = PageRequest.of(page, size, Sort.by(direction, "createdAt"))
@@ -146,6 +147,12 @@ class AdminController(
                 cb.lessThan(root.get("createdAt"), dateTo.plusDays(1).atStartOfDay())
             }
             spec = spec.and(toSpec) ?: spec
+        }
+        if (!status.isNullOrBlank()) {
+            val statusSpec = Specification<Order> { root, _, cb ->
+                cb.equal(root.get<String>("status"), status)
+            }
+            spec = spec.and(statusSpec) ?: spec
         }
 
         val page = orderRepository.findAll(spec, pageable)

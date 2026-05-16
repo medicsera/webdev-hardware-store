@@ -2,6 +2,19 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Order } from '@/types/order'
 import api from '@/api/auth'
+import OrderDetailModal from '@/components/OrderDetailModal.vue'
+
+const selectedOrder = ref<Order | null>(null)
+
+function openOrder(order: Order) {
+  selectedOrder.value = order
+}
+
+function onCancelled(updated: Order) {
+  const idx = orders.value.findIndex(o => o.id === updated.id)
+  if (idx !== -1) orders.value[idx] = updated
+  selectedOrder.value = updated
+}
 
 const orders = ref<Order[]>([])
 const loading = ref(true)
@@ -132,9 +145,17 @@ onUnmounted(() => {
             <span class="order-card__status" :class="`order-card__status--${order.status}`">
               {{ statusLabel[order.status] ?? order.status }}
             </span>
+            <button class="order-card__details" @click="openOrder(order)">Подробнее</button>
           </div>
         </div>
       </div>
+
+      <OrderDetailModal
+        v-if="selectedOrder"
+        :order="selectedOrder"
+        @close="selectedOrder = null"
+        @cancelled="onCancelled"
+      />
 
       <div class="order-history__controls">
         <button
@@ -299,6 +320,26 @@ onUnmounted(() => {
     font-size: 11px;
     color: #666;
     margin: 0;
+  }
+
+  &__details {
+    margin-top: 6px;
+    width: 100%;
+    padding: 5px 0;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+    &:hover {
+      background: #f4b942;
+      border-color: #f4b942;
+      color: white;
+    }
   }
 
   &__status {

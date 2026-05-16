@@ -38,9 +38,10 @@ const orderFilterUser     = ref('')
 const orderSortDir        = ref<'desc' | 'asc'>('desc')
 const orderFilterDateFrom = ref('')
 const orderFilterDateTo   = ref('')
+const orderFilterStatus   = ref('')
 
 const hasActiveFilters = computed(() =>
-  !!(orderFilterUser.value.trim() || orderFilterDateFrom.value || orderFilterDateTo.value)
+  !!(orderFilterUser.value.trim() || orderFilterDateFrom.value || orderFilterDateTo.value || orderFilterStatus.value)
 )
 
 const groupedOrders = computed(() => {
@@ -91,6 +92,7 @@ async function loadOrders(resetPage = false) {
     if (orderFilterUser.value.trim())  params.search   = orderFilterUser.value.trim()
     if (orderFilterDateFrom.value)     params.dateFrom = orderFilterDateFrom.value
     if (orderFilterDateTo.value)       params.dateTo   = orderFilterDateTo.value
+    if (orderFilterStatus.value)       params.status   = orderFilterStatus.value
 
     const res = await api.get('/admin/orders', { params })
     orders.value             = res.data.content
@@ -105,7 +107,7 @@ watch(orderFilterUser, () => {
   if (_searchDebounce) clearTimeout(_searchDebounce)
   _searchDebounce = setTimeout(() => loadOrders(true), 400)
 })
-watch([orderFilterDateFrom, orderFilterDateTo, orderSortDir], () => loadOrders(true))
+watch([orderFilterDateFrom, orderFilterDateTo, orderSortDir, orderFilterStatus], () => loadOrders(true))
 
 async function changeOrderStatus(order: AdminOrder, status: string) {
   try {
@@ -551,10 +553,23 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                 :title="orderSortDir === 'desc' ? 'Сначала новые' : 'Сначала старые'"
                 @click="orderSortDir = orderSortDir === 'desc' ? 'asc' : 'desc'"
               >{{ orderSortDir === 'desc' ? '↓ Новые' : '↑ Старые' }}</button>
+              <select
+                v-model="orderFilterStatus"
+                class="orders-filter-status"
+              >
+                <option value="">Все статусы</option>
+                <option value="pending">Ожидает</option>
+                <option value="processing">В обработке</option>
+                <option value="shipped">В доставке</option>
+                <option value="delivered">Доставлен</option>
+                <option value="ready_for_pickup">Готов к выдаче</option>
+                <option value="picked_up">Выдан</option>
+                <option value="cancelled">Отменён</option>
+              </select>
               <button
                 v-if="hasActiveFilters"
                 class="btn btn--sm orders-reset-btn"
-                @click="orderFilterUser = ''; orderFilterDateFrom = ''; orderFilterDateTo = ''"
+                @click="orderFilterUser = ''; orderFilterDateFrom = ''; orderFilterDateTo = ''; orderFilterStatus = ''"
               >✕ Сбросить</button>
             </div>
 
@@ -1559,6 +1574,19 @@ select.form-input { height: 32px; }
   font-size: 12px;
   color: #999;
   flex-shrink: 0;
+}
+
+.orders-filter-status {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: inherit;
+  background: white;
+  cursor: pointer;
+  flex-shrink: 0;
+  &:focus { outline: none; border-color: #f4b942; }
 }
 
 .orders-sort-btn {
