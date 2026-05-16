@@ -9,7 +9,6 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester
 import org.springframework.web.context.WebApplicationContext
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @SpringBootTest
@@ -27,17 +26,20 @@ abstract class AbstractIntegrationTest {
     }
 
     companion object {
+        // Singleton pattern: контейнеры стартуют один раз на всю JVM-сессию и не
+        // останавливаются между тест-классами, что предотвращает потерю соединения
+        // в @Sql-колбэках afterTestMethod.
         @JvmField
-        @Container
         val postgres: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16-alpine")
             .withDatabaseName("hardware_store_test")
             .withUsername("test")
             .withPassword("test")
+            .apply { start() }
 
         @JvmField
-        @Container
         val redis: GenericContainer<*> = GenericContainer("redis:7-alpine")
             .withExposedPorts(6379)
+            .apply { start() }
 
         @JvmStatic
         @DynamicPropertySource
