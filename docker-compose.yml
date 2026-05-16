@@ -13,6 +13,8 @@ services:
   backend:
     build: .
     container_name: hardware-store-backend
+    ports:
+      - "8080:8080"
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
