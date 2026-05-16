@@ -1,5 +1,6 @@
 package com.example.webdev_hardware_store
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.jdbc.Sql
@@ -38,7 +39,7 @@ class CatalogIntegrationTest : AbstractIntegrationTest() {
         assertThat(result).hasStatusOk()
 
         val body = result.response.contentAsString
-        val count = body.split("},{").size
+        val count = ObjectMapper().readTree(body).size()
         assertThat(count).isLessThanOrEqualTo(1)
     }
 }
