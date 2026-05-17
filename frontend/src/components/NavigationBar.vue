@@ -345,6 +345,8 @@ const handleLogout = () => {
   transition: background-color 0.2s;
   flex-shrink: 0;
 
+  img { width: 20px; height: 20px; }
+
   &--active { background-color: $color-primary-dark; }
 
   @include below-md { width: 48px; }
@@ -495,6 +497,8 @@ const handleLogout = () => {
   }
 
   &-icon {
+    width: 18px;
+    height: 18px;
     margin-right: 10px;
     cursor: pointer;
     opacity: 0.6;
@@ -629,6 +633,8 @@ const handleLogout = () => {
       opacity: 0.7;
       transition: opacity 0.2s, transform 0.2s;
 
+      img { width: 20px; height: 20px; }
+
       &:hover {
         opacity: 1;
         transform: translateY(-2px);
@@ -660,7 +666,7 @@ const handleLogout = () => {
     background: transparent;
     border: 0;
     cursor: pointer;
-    img { transition: transform 0.2s ease, filter 0.2s ease; }
+    img { width: 24px; height: 24px; transition: transform 0.2s ease, filter 0.2s ease; }
     &:hover img { transform: scale(1.1); filter: drop-shadow(0 2px 4px rgba($color-primary, 0.4)); }
   }
 
@@ -720,7 +726,7 @@ const handleLogout = () => {
     background: transparent;
     border: 0;
     cursor: pointer;
-    img { transition: transform 0.2s ease, filter 0.2s ease; }
+    img { width: 24px; height: 24px; transition: transform 0.2s ease, filter 0.2s ease; }
     &:hover img { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 2px 4px rgba($color-primary, 0.4)); }
   }
 
@@ -763,7 +769,7 @@ const handleLogout = () => {
   border: 0;
   cursor: pointer;
   padding: 0;
-  img { transition: transform 0.2s ease, filter 0.2s ease; }
+  img { width: 24px; height: 24px; transition: transform 0.2s ease, filter 0.2s ease; }
   &:hover img { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 2px 4px rgba($color-primary, 0.4)); }
 }
 
