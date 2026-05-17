@@ -32,35 +32,35 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .home-view {
-  padding: 24px;
-  background: #f5f5f5;
+  padding: $gap-lg;
+  background: $color-bg-light;
+
+  @include below-md { padding: $gap-md; }
+  @include below-sm { padding: $gap-sm; }
 
   .banner {
     width: 100%;
-    margin-bottom: 24px;
-    border-radius: 8px;
+    margin-bottom: $gap-lg;
+    border-radius: $radius-md;
     display: block;
   }
 
   .error-message {
     text-align: center;
-    padding: 40px;
-    background: white;
-    border-radius: 8px;
+    padding: $gap-xl;
+    background: #fff;
+    border-radius: $radius-md;
     margin: 20px 0;
 
     button {
-      margin-top: 16px;
+      margin-top: $gap-md;
       padding: 10px 20px;
-      background: #42b983;
-      color: white;
+      background: $color-success-light;
+      color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: $radius-md;
       cursor: pointer;
-
-      &:hover {
-        background: #369970;
-      }
+      &:hover { filter: brightness(0.9); }
     }
   }
 }

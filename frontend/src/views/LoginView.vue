@@ -98,72 +98,62 @@ const goToRegister = () => {
 
 <style lang="scss" scoped>
 .auth-page {
-  min-height: calc(100vh - 110px);
+  min-height: calc(100vh - #{$nav-height});
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: $gap-xl $container-pad;
+
+  @include below-sm { padding: $gap-lg $gap-md; }
 }
 
 .auth-card {
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
   padding: 32px;
   width: 100%;
   max-width: 400px;
 
+  @include below-xs { padding: $gap-lg $gap-md; }
+
   &__title {
-    font-size: 22px;
+    font-size: $font-2xl;
     font-weight: 700;
-    color: #27ae60;
-    margin: 0 0 24px;
+    color: $color-success;
+    margin: 0 0 $gap-lg;
     text-align: center;
   }
 
-  &__form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+  &__form { display: flex; flex-direction: column; gap: $gap-md; }
 
   &__submit {
-    padding: 12px 24px;
-    background: #f4b942;
-    color: #2c3e50;
+    padding: 12px $gap-lg;
+    background: $color-primary;
+    color: $color-dark;
     border: none;
-    border-radius: 24px;
-    font-size: 14px;
+    border-radius: $radius-pill;
+    font-size: $font-md;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover:not(:disabled) {
-      background: #e0a830;
-    }
-
-    &:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
+    transition: background 0.2s;
+    &:hover:not(:disabled) { background: $color-primary-dark; }
+    &:disabled { opacity: 0.7; cursor: not-allowed; }
   }
 
   &__footer {
     text-align: center;
-    font-size: 13px;
-    color: #666;
+    font-size: $font-base;
+    color: $color-text-secondary;
     margin: 20px 0 0;
   }
 
   &__link {
-    color: #27ae60;
+    color: $color-success;
     text-decoration: none;
     font-weight: 600;
-
-    &:hover {
-      text-decoration: underline;
-    }
+    &:hover { text-decoration: underline; }
   }
 }
 
@@ -172,37 +162,26 @@ const goToRegister = () => {
   flex-direction: column;
   gap: 6px;
 
-  &__label {
-    font-size: 13px;
-    color: #555;
-    font-weight: 500;
-  }
+  &__label { font-size: $font-base; color: $color-text; font-weight: 500; }
 
   &__input {
     padding: 10px 14px;
     border: 1px solid #ccc;
-    border-radius: 20px;
-    font-size: 14px;
+    border-radius: $radius-pill;
+    font-size: $font-md;
     background: #fff;
     transition: border-color 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: #f4b942;
-    }
-
-    &::placeholder {
-      color: #aaa;
-    }
+    &:focus { outline: none; border-color: $color-primary; }
+    &::placeholder { color: $color-text-faint; }
   }
 }
 
 .form-error {
-  background: #fdecea;
-  border: 1px solid #e74c3c;
-  border-radius: 8px;
+  background: $color-danger-bg;
+  border: 1px solid $color-danger;
+  border-radius: $radius-md;
   padding: 10px 14px;
-  font-size: 13px;
-  color: #e74c3c;
+  font-size: $font-base;
+  color: $color-danger;
 }
 </style>
