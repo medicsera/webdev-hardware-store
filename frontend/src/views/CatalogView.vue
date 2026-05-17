@@ -16,6 +16,7 @@ const cartStore = useCartStore()
 const sortBy = ref<'default' | 'price-asc' | 'price-desc'>('default')
 const priceFrom = ref('')
 const priceTo = ref('')
+const mobileView = ref<'single' | 'two-col'>('two-col')
 
 const categorySlug    = computed(() => route.params.categorySlug as string | undefined)
 const subcategorySlug = computed(() => route.params.subcategorySlug as string | undefined)
@@ -145,11 +146,38 @@ const handleQuantityChange = (_id: number, _qty: number) => {}
               <svg v-if="sortBy === 'price-asc'" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2L10 8H2L6 2Z" fill="#f4b942"/></svg>
               <svg v-else-if="sortBy === 'price-desc'" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 10L2 4H10L6 10Z" fill="#f4b942"/></svg>
             </button>
+
+            <div class="view-toggle">
+              <button
+                class="view-toggle__btn"
+                :class="{ 'view-toggle__btn--active': mobileView === 'single' }"
+                @click="mobileView = 'single'"
+                title="Один товар"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="2" y="2" width="14" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                  <rect x="2" y="10" width="14" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+              <button
+                class="view-toggle__btn"
+                :class="{ 'view-toggle__btn--active': mobileView === 'two-col' }"
+                @click="mobileView = 'two-col'"
+                title="Два товара"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                  <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                  <rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                  <rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Loading -->
-          <div v-if="loading" class="products-grid">
-            <ProductCard v-for="n in 8" :key="n" :product="undefined" />
+          <div v-if="loading" class="products-grid" :class="`products-grid--mobile-${mobileView}`">
+            <ProductCard v-for="n in 8" :key="n" :product="undefined" :compact="mobileView === 'two-col'" />
           </div>
 
           <!-- Empty -->
@@ -158,13 +186,14 @@ const handleQuantityChange = (_id: number, _qty: number) => {}
           </div>
 
           <!-- Products -->
-          <div v-else class="products-grid">
+          <div v-else class="products-grid" :class="`products-grid--mobile-${mobileView}`">
             <ProductCard
               v-for="product in filteredProducts"
               :key="product.id"
               :product="product"
               :show-add-to-cart="true"
               :show-quantity="true"
+              :compact="mobileView === 'two-col'"
               @add-to-cart="handleAddToCart"
               @quantity-change="handleQuantityChange"
             />
@@ -307,7 +336,57 @@ const handleQuantityChange = (_id: number, _qty: number) => {}
 
   @include below-lg { grid-template-columns: repeat(3, 1fr); }
   @include below-md { grid-template-columns: repeat(2, 1fr); }
-  @include below-xs { grid-template-columns: 1fr; }
+  @include below-sm {
+    &--mobile-single {
+      grid-template-columns: 1fr;
+      :deep(.product-card) {
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+    }
+    &--mobile-two-col {
+      grid-template-columns: repeat(2, 1fr);
+      gap: $gap-sm;
+      :deep(.product-card) {
+        width: 100%;
+        min-height: unset;
+      }
+      :deep(.product-info__title) { font-size: $font-base; }
+      :deep(.price) { font-size: $font-md; }
+      :deep(.btn-add-to-cart) { font-size: $font-sm; padding: 8px $gap-sm; }
+    }
+  }
+}
+
+.view-toggle {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+
+  @include below-sm { display: flex; }
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: none;
+    color: $color-text-muted;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover { border-color: $color-primary; color: $color-primary; }
+    &--active {
+      background: $color-primary;
+      border-color: $color-primary;
+      color: $color-dark;
+    }
+  }
 }
 
 .catalog-empty {
