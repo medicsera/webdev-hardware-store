@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import api from '@/api/auth'
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import AdminProductModal from '@/components/AdminProductModal.vue'
 
 interface Catalog    { id: number; name: string; slug: string; imageUrl?: string }
 interface SubCatalog { id: number; catalogId: number; name: string; slug: string; imageUrl?: string }
 interface Product    { id: number; name: string; description: string; price: number; quantity: number; catalogId: number | null; subCatalogId: number | null; imageUrls: string[]; characteristics: Record<string, string> }
-interface Char       { name: string; type: string }
 interface Notification { id: number; msg: string; type: 'error' | 'success' | 'info' }
 
 interface AdminOrderItem { id: number; productId: number; name: string; price: number; quantity: number; imageUrl: string | null }
@@ -17,6 +18,7 @@ interface AdminOrder {
 }
 
 
+const router = useRouter()
 const activeTab = ref<'catalog' | 'orders'>('catalog')
 
 const catalogs    = ref<Catalog[]>([])
@@ -149,6 +151,15 @@ const CAT_PER_PAGE       = 3
 const selectedSubCatalog = ref<SubCatalog | null>(null)
 const subCatalogPage     = ref(0)
 
+// --- search ---
+const searchCatalog    = ref('')
+const searchSubCatalog = ref('')
+const searchProduct    = ref('')
+
+watch(searchCatalog,    () => { catalogPage.value    = 0 })
+watch(searchSubCatalog, () => { subCatalogPage.value = 0 })
+watch(searchProduct,    () => { productPage.value    = 0 })
+
 // --- catalog modal ---
 const showCatalogModal       = ref(false)
 const catalogModalMode       = ref<'add' | 'edit'>('add')
@@ -160,56 +171,26 @@ const catalogModalImgPreview = ref<string | null>(null)
 const showSubModal       = ref(false)
 const subModalMode       = ref<'add' | 'edit'>('add')
 const subModalName       = ref('')
-const subModalImgFile    = ref<File | null>(null)
-const subModalImgPreview = ref<string | null>(null)
+const subModalCatalogId  = ref<number | null>(null)
 
 const productPage        = ref(0)
 const PROD_PER_PAGE      = 3
 const slideDirection     = ref<'left' | 'right'>('left')
+const catSlideDirection  = ref<'left' | 'right'>('left')
+const subSlideDirection  = ref<'left' | 'right'>('left')
 
 // ── loading / submitting states ──
-const savingProduct     = ref(false)
 const savingCatalog     = ref(false)
 const savingSub         = ref(false)
 const deletingProductId = ref<number | null>(null)
-const removingImageUrl  = ref<string | null>(null)
 
-function prevProd() { slideDirection.value = 'right'; productPage.value-- }
-function nextProd() { slideDirection.value = 'left';  productPage.value++ }
+function prevProd() { slideDirection.value    = 'right'; productPage.value-- }
+function nextProd() { slideDirection.value    = 'left';  productPage.value++ }
+function prevCat()  { catSlideDirection.value = 'right'; catalogPage.value-- }
+function nextCat()  { catSlideDirection.value = 'left';  catalogPage.value++ }
+function prevSub()  { subSlideDirection.value = 'right'; subCatalogPage.value-- }
+function nextSub()  { subSlideDirection.value = 'left';  subCatalogPage.value++ }
 
-// --- add-product form ---
-const productForm = ref({ id: null as number | null, name: '', description: '', price: 0, quantity: 1, catalogId: null as number | null, subCatalogId: null as number | null, imageUrls: [] as string[] })
-const chars       = ref<Char[]>([])
-
-// --- image upload ---
-const selectedFiles  = ref<File[]>([])
-const newPreviewUrls = ref<string[]>([])
-
-function onFilesSelected(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (!input.files) return
-  const added = Array.from(input.files)
-  selectedFiles.value.push(...added)
-  added.forEach(f => newPreviewUrls.value.push(URL.createObjectURL(f)))
-  input.value = ''
-}
-
-function removeNewImage(index: number) {
-  URL.revokeObjectURL(newPreviewUrls.value[index])
-  newPreviewUrls.value.splice(index, 1)
-  selectedFiles.value.splice(index, 1)
-}
-
-async function removeExistingImage(imageUrl: string) {
-  if (!productForm.value.id) return
-  removingImageUrl.value = imageUrl
-  try {
-    const res = await api.delete(`/admin/products/${productForm.value.id}/images`, { params: { imageUrl } })
-    productForm.value.imageUrls = res.data.imageUrls
-    await loadAll()
-  } catch (e) { notify(apiError(e)) }
-  finally { removingImageUrl.value = null }
-}
 
 // --- notifications ---
 let _notifId = 0
@@ -232,16 +213,24 @@ function apiError(e: any): string {
 }
 
 // ---- computed slices ----
+const matchedCatalogs = computed(() => {
+  const q = searchCatalog.value.trim().toLowerCase()
+  return q ? catalogs.value.filter(c => c.name.toLowerCase().includes(q)) : catalogs.value
+})
 const visibleCatalogs = computed(() => {
   const s = catalogPage.value * CAT_PER_PAGE
-  return catalogs.value.slice(s, s + CAT_PER_PAGE)
+  return matchedCatalogs.value.slice(s, s + CAT_PER_PAGE)
 })
 const canPrevCat = computed(() => catalogPage.value > 0)
-const canNextCat = computed(() => (catalogPage.value + 1) * CAT_PER_PAGE < catalogs.value.length)
+const canNextCat = computed(() => (catalogPage.value + 1) * CAT_PER_PAGE < matchedCatalogs.value.length)
 
-const filteredSubs = computed(() =>
-  selectedCatalog.value ? subCatalogs.value.filter(s => s.catalogId === selectedCatalog.value!.id) : []
-)
+const filteredSubs = computed(() => {
+  const byCatalog = selectedCatalog.value
+    ? subCatalogs.value.filter(s => s.catalogId === selectedCatalog.value!.id)
+    : subCatalogs.value
+  const q = searchSubCatalog.value.trim().toLowerCase()
+  return q ? byCatalog.filter(s => s.name.toLowerCase().includes(q)) : byCatalog
+})
 const visibleSubs = computed(() => {
   const s = subCatalogPage.value * CAT_PER_PAGE
   return filteredSubs.value.slice(s, s + CAT_PER_PAGE)
@@ -249,13 +238,15 @@ const visibleSubs = computed(() => {
 const canPrevSub = computed(() => subCatalogPage.value > 0)
 const canNextSub = computed(() => (subCatalogPage.value + 1) * CAT_PER_PAGE < filteredSubs.value.length)
 
-const filteredProducts = computed(() =>
-  selectedSubCatalog.value
+const filteredProducts = computed(() => {
+  let list = selectedSubCatalog.value
     ? products.value.filter(p => p.subCatalogId === selectedSubCatalog.value!.id)
     : selectedCatalog.value
       ? products.value.filter(p => p.catalogId === selectedCatalog.value!.id)
       : products.value
-)
+  const q = searchProduct.value.trim().toLowerCase()
+  return q ? list.filter(p => p.name.toLowerCase().includes(q)) : list
+})
 const visibleProducts = computed(() => {
   const s = productPage.value * PROD_PER_PAGE
   return filteredProducts.value.slice(s, s + PROD_PER_PAGE)
@@ -263,9 +254,6 @@ const visibleProducts = computed(() => {
 const canPrevProd = computed(() => productPage.value > 0)
 const canNextProd = computed(() => (productPage.value + 1) * PROD_PER_PAGE < filteredProducts.value.length)
 
-const formSubs = computed(() =>
-  productForm.value.catalogId ? subCatalogs.value.filter(s => s.catalogId === productForm.value.catalogId) : []
-)
 
 async function loadAll() {
   try {
@@ -288,12 +276,16 @@ function pickCatalog(c: Catalog) {
     selectedSubCatalog.value = null
     subCatalogPage.value     = 0
     productPage.value        = 0
+    searchSubCatalog.value   = ''
+    searchProduct.value      = ''
     return
   }
   selectedCatalog.value    = c
   selectedSubCatalog.value = null
   subCatalogPage.value     = 0
   productPage.value        = 0
+  searchSubCatalog.value   = ''
+  searchProduct.value      = ''
 }
 
 function openAddCatalog() {
@@ -375,32 +367,17 @@ function pickSub(s: SubCatalog) {
 
 function openAddSub() {
   if (!selectedCatalog.value) { notify('Сначала выберите каталог'); return }
-  subModalMode.value       = 'add'
-  subModalName.value       = ''
-  subModalImgFile.value    = null
-  subModalImgPreview.value = null
-  showSubModal.value       = true
+  subModalMode.value      = 'add'
+  subModalName.value      = ''
+  subModalCatalogId.value = selectedCatalog.value.id
+  showSubModal.value      = true
 }
 
 function openEditSub(s: SubCatalog) {
-  subModalMode.value       = 'edit'
-  subModalName.value       = s.name
-  subModalImgFile.value    = null
-  subModalImgPreview.value = s.imageUrl ?? null
-  showSubModal.value       = true
-}
-
-function onSubImgSelected(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (!input.files?.[0]) return
-  subModalImgFile.value    = input.files[0]
-  subModalImgPreview.value = URL.createObjectURL(input.files[0])
-  input.value = ''
-}
-
-function removeSubImg() {
-  subModalImgFile.value    = null
-  subModalImgPreview.value = null
+  subModalMode.value      = 'edit'
+  subModalName.value      = s.name
+  subModalCatalogId.value = s.catalogId
+  showSubModal.value      = true
 }
 
 async function saveSubModal() {
@@ -408,20 +385,12 @@ async function saveSubModal() {
   savingSub.value = true
   try {
     const slug = subModalName.value.trim().toLowerCase().replace(/\s+/g, '-')
-    let id: number
     if (subModalMode.value === 'add') {
-      const res = await api.post('/admin/subcatalogs', { name: subModalName.value.trim(), slug, catalogId: selectedCatalog.value!.id })
-      id = res.data.id
+      await api.post('/admin/subcatalogs', { name: subModalName.value.trim(), slug, catalogId: subModalCatalogId.value })
     } else {
       await api.put(`/admin/subcatalogs/${selectedSubCatalog.value!.id}`, {
-        name: subModalName.value.trim(), slug, catalogId: selectedSubCatalog.value!.catalogId
+        name: subModalName.value.trim(), slug, catalogId: subModalCatalogId.value
       })
-      id = selectedSubCatalog.value!.id
-    }
-    if (subModalImgFile.value) {
-      const form = new FormData()
-      form.append('file', subModalImgFile.value)
-      await api.post(`/admin/subcatalogs/${id}/image`, form)
     }
     showSubModal.value = false
     await loadAll()
@@ -443,68 +412,27 @@ async function deleteSubInModal() {
 
 // ---- product CRUD ----
 const showProductModal = ref(false)
+const productToEdit    = ref<Product | null>(null)
 
 function openAddProduct() {
-  resetForm()
+  productToEdit.value    = null
   showProductModal.value = true
 }
 
 function editProduct(p: Product) {
-  productForm.value    = { ...p, imageUrls: [...(p.imageUrls ?? [])] }
-  chars.value          = Object.entries(p.characteristics ?? {}).map(([name, type]) => ({ name, type }))
-  selectedFiles.value  = []
-  newPreviewUrls.value.forEach(u => URL.revokeObjectURL(u))
-  newPreviewUrls.value = []
+  productToEdit.value    = p
   showProductModal.value = true
 }
+
 async function removeProduct(id: number) {
   if (!confirm('Удалить товар?')) return
   deletingProductId.value = id
   try {
     await api.delete(`/admin/products/${id}`)
-    if (showProductModal.value) showProductModal.value = false
     await loadAll()
   } catch (e) { notify(apiError(e)) }
   finally { deletingProductId.value = null }
 }
-async function saveProduct() {
-  if (!productForm.value.name.trim()) { notify('Введите название товара'); return }
-  savingProduct.value = true
-  try {
-    const characteristics = Object.fromEntries(
-      chars.value.filter(c => c.name.trim()).map(c => [c.name.trim(), c.type.trim()])
-    )
-    const payload = { ...productForm.value, characteristics }
-    let savedId: number
-    if (payload.id) {
-      await api.put(`/admin/products/${payload.id}`, payload)
-      savedId = payload.id
-    } else {
-      const res = await api.post('/admin/products', payload)
-      savedId = res.data.id
-    }
-    if (selectedFiles.value.length > 0) {
-      const form = new FormData()
-      selectedFiles.value.forEach(f => form.append('files', f))
-      await api.post(`/admin/products/${savedId}/images`, form)
-    }
-    await loadAll()
-    resetForm()
-    showProductModal.value = false
-  } catch (e) { notify(apiError(e)) }
-  finally { savingProduct.value = false }
-}
-function resetForm() {
-  productForm.value = { id: null, name: '', description: '', price: 0, quantity: 1, catalogId: null, subCatalogId: null, imageUrls: [] }
-  chars.value = []
-  selectedFiles.value = []
-  newPreviewUrls.value.forEach(u => URL.revokeObjectURL(u))
-  newPreviewUrls.value = []
-}
-
-// ---- characteristics ----
-function addChar() { chars.value.push({ name: '', type: '' }) }
-function removeChar(i: number) { chars.value.splice(i, 1) }
 </script>
 
 <template>
@@ -667,6 +595,12 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
               <!-- Catalog editing -->
               <div class="section-header">
                 <h3 class="section-title">Каталог</h3>
+                <input
+                  v-model="searchCatalog"
+                  class="admin-search-input"
+                  placeholder="Поиск..."
+                  type="text"
+                />
                 <div class="section-actions">
                   <button class="btn btn--green"  @click="openAddCatalog">+ Добавить</button>
                   <button v-if="selectedCatalog" class="btn btn--orange" @click="openEditCatalog(selectedCatalog)">Изменить</button>
@@ -674,42 +608,67 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
               </div>
 
               <div class="carousel-row">
-                <button class="arrow" :disabled="!canPrevCat" @click="catalogPage--">&#8592;</button>
-                <div class="carousel-items">
-                  <button
-                    v-for="c in visibleCatalogs" :key="c.id"
-                    class="carousel-tag"
-                    :class="{ 'carousel-tag--active': selectedCatalog?.id === c.id }"
-                    @click="pickCatalog(c)"
-                  >{{ c.name }}</button>
-                  <span v-if="visibleCatalogs.length === 0" class="empty-hint">Нет каталогов</span>
+                <button class="arrow" :disabled="!canPrevCat" @click="prevCat">&#8592;</button>
+                <div class="carousel-items carousel-items--overflow">
+                  <transition :name="'slide-' + catSlideDirection" mode="out-in">
+                    <div class="carousel-items__inner" :key="catalogPage + '_' + searchCatalog">
+                      <button
+                        v-for="c in visibleCatalogs" :key="c.id"
+                        class="carousel-tag"
+                        :class="{ 'carousel-tag--active': selectedCatalog?.id === c.id }"
+                        @click="pickCatalog(c)"
+                      >{{ c.name }}</button>
+                      <span v-if="visibleCatalogs.length === 0" class="empty-hint">{{ searchCatalog ? 'Ничего не найдено' : 'Нет каталогов' }}</span>
+                    </div>
+                  </transition>
                 </div>
-                <button class="arrow" :disabled="!canNextCat" @click="catalogPage++">&#8594;</button>
+                <button class="arrow" :disabled="!canNextCat" @click="nextCat">&#8594;</button>
               </div>
 
               <!-- Subcatalog editing -->
               <div class="section-header" style="margin-top:24px">
                 <h3 class="section-title">Подкаталог</h3>
-                <div class="section-actions" :class="{ 'section-actions--disabled': !selectedCatalog }">
+                <input
+                  v-model="searchSubCatalog"
+                  class="admin-search-input"
+                  placeholder="Поиск..."
+                  type="text"
+                />
+                <div class="section-actions">
                   <button class="btn btn--green" @click="openAddSub" :disabled="!selectedCatalog">+ Добавить</button>
                   <button v-if="selectedSubCatalog" class="btn btn--orange" @click="openEditSub(selectedSubCatalog)">Изменить</button>
                 </div>
               </div>
 
               <div class="carousel-row">
-                <button class="arrow" :disabled="!canPrevSub" @click="subCatalogPage--">&#8592;</button>
-                <div class="carousel-items">
-                  <button
-                    v-for="s in visibleSubs" :key="s.id"
-                    class="carousel-tag"
-                    :class="{ 'carousel-tag--active': selectedSubCatalog?.id === s.id }"
-                    @click="pickSub(s)"
-                  >{{ s.name }}</button>
-                  <span v-if="visibleSubs.length === 0" class="empty-hint">
-                    {{ selectedCatalog ? 'Нет подкаталогов' : 'Сначала выберите каталог' }}
-                  </span>
+                <button class="arrow" :disabled="!canPrevSub" @click="prevSub">&#8592;</button>
+                <div class="carousel-items carousel-items--overflow">
+                  <transition :name="'slide-' + subSlideDirection" mode="out-in">
+                    <div class="carousel-items__inner" :key="subCatalogPage + '_' + searchSubCatalog + '_' + selectedCatalog?.id">
+                      <button
+                        v-for="s in visibleSubs" :key="s.id"
+                        class="carousel-tag"
+                        :class="{ 'carousel-tag--active': selectedSubCatalog?.id === s.id }"
+                        @click="pickSub(s)"
+                      >{{ s.name }}</button>
+                      <span v-if="visibleSubs.length === 0" class="empty-hint">
+                        {{ searchSubCatalog ? 'Ничего не найдено' : selectedCatalog ? 'Нет подкаталогов' : 'Выберите каталог или введите поиск' }}
+                      </span>
+                    </div>
+                  </transition>
                 </div>
-                <button class="arrow" :disabled="!canNextSub" @click="subCatalogPage++">&#8594;</button>
+                <button class="arrow" :disabled="!canNextSub" @click="nextSub">&#8594;</button>
+              </div>
+
+              <!-- Product search -->
+              <div class="section-header" style="margin-top:24px; margin-bottom:0">
+                <h3 class="section-title">Товары</h3>
+                <input
+                  v-model="searchProduct"
+                  class="admin-search-input"
+                  placeholder="Поиск по названию..."
+                  type="text"
+                />
               </div>
 
               <!-- Product filter indicator -->
@@ -733,7 +692,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
                     <div class="product-cards" :key="productPage">
                       <template v-if="visibleProducts.length > 0">
                         <div v-for="p in visibleProducts" :key="p.id" class="product-card">
-                          <div class="product-card__img">
+                          <div class="product-card__img" @click="router.push(`/product/${p.id}`)">
                             <img v-if="p.imageUrls?.length" :src="p.imageUrls[0]" alt="" />
                           </div>
                           <div class="product-card__body">
@@ -763,93 +722,13 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
     </div>
 
     <!-- Product modal -->
-    <div v-if="showProductModal" class="modal-backdrop" @click.self="!savingProduct && (resetForm(), showProductModal = false)">
-      <div class="modal modal--wide">
-        <h3 class="modal-title">{{ productForm.id ? 'Изменение товара' : 'Добавление товара' }}</h3>
-
-        <div class="char-section">
-          <div class="char-section__header">
-            <span class="char-section__label">Характеристики:</span>
-            <button class="btn btn--green btn--sm" @click="addChar">+ Добавить</button>
-          </div>
-          <div v-if="chars.length" class="char-list">
-            <div v-for="(c, i) in chars" :key="i" class="char-row">
-              <input v-model="c.name" class="form-input char-input" placeholder="Название" />
-              <span class="char-sep">:</span>
-              <input v-model="c.type" class="form-input char-input" placeholder="Значение" />
-              <button class="char-delete" @click="removeChar(i)" title="Удалить">&#10005;</button>
-            </div>
-          </div>
-          <p v-else class="char-empty">Нет характеристик</p>
-        </div>
-
-        <div class="form-grid">
-          <label class="form-row">
-            <span class="form-label">Название:</span>
-            <input v-model="productForm.name" class="form-input" />
-          </label>
-          <label class="form-row form-row--top">
-            <span class="form-label">Описание:</span>
-            <textarea v-model="productForm.description" class="form-input form-textarea" rows="5" placeholder="Введите описание товара..."></textarea>
-          </label>
-          <label class="form-row">
-            <span class="form-label">Цена (₽):</span>
-            <input v-model.number="productForm.price" type="number" min="0" step="0.01" class="form-input" />
-          </label>
-          <label class="form-row">
-            <span class="form-label">Количество:</span>
-            <input v-model.number="productForm.quantity" type="number" min="0" class="form-input" />
-          </label>
-          <label class="form-row">
-            <span class="form-label">Каталог:</span>
-            <select v-model="productForm.catalogId" class="form-input" @change="productForm.subCatalogId = null">
-              <option :value="null">— не выбран —</option>
-              <option v-for="c in catalogs" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select>
-          </label>
-          <label class="form-row">
-            <span class="form-label">Подкаталог:</span>
-            <select v-model="productForm.subCatalogId" class="form-input">
-              <option :value="null">— не выбран —</option>
-              <option v-for="s in formSubs" :key="s.id" :value="s.id">{{ s.name }}</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- Image upload -->
-        <div class="image-upload-section" style="margin-top:16px">
-          <p style="font-size:13px;color:#333;margin-bottom:8px">Фотографии товара:</p>
-          <div class="image-grid" v-if="productForm.imageUrls.length || newPreviewUrls.length">
-            <div v-for="url in productForm.imageUrls" :key="url" class="image-thumb">
-              <img :src="url" alt="" />
-              <button class="image-thumb__remove" :disabled="removingImageUrl === url" @click="removeExistingImage(url)" title="Удалить">
-                {{ removingImageUrl === url ? '…' : '✕' }}
-              </button>
-            </div>
-            <div v-for="(url, i) in newPreviewUrls" :key="'new-' + i" class="image-thumb image-thumb--new">
-              <img :src="url" alt="" />
-              <button class="image-thumb__remove" @click="removeNewImage(i)" title="Удалить">&#10005;</button>
-            </div>
-          </div>
-          <label class="upload-btn">
-            <input type="file" accept="image/*" multiple hidden @change="onFilesSelected" />
-            + Добавить фото
-          </label>
-        </div>
-
-        <div class="form-actions" style="max-width:none">
-          <button class="btn btn--green" :disabled="savingProduct" @click="saveProduct">
-            <span v-if="savingProduct" class="btn-spinner"></span>
-            {{ savingProduct ? 'Сохранение...' : (productForm.id ? 'Сохранить' : 'Добавить') }}
-          </button>
-          <button v-if="productForm.id" class="btn btn--red" :disabled="savingProduct || deletingProductId === productForm.id" @click="removeProduct(productForm.id!)">
-            <span v-if="deletingProductId === productForm.id" class="btn-spinner"></span>
-            {{ deletingProductId === productForm.id ? 'Удаление...' : 'Удалить' }}
-          </button>
-          <button class="btn btn--orange" :disabled="savingProduct" @click="resetForm(); showProductModal = false">Отмена</button>
-        </div>
-      </div>
-    </div>
+    <AdminProductModal
+      v-if="showProductModal"
+      :product="productToEdit"
+      @close="showProductModal = false"
+      @saved="showProductModal = false; loadAll(); notify('Товар сохранён', 'success')"
+      @deleted="showProductModal = false; loadAll(); notify('Товар удалён', 'success')"
+    />
 
     <!-- Notifications -->
     <teleport to="body">
@@ -900,21 +779,14 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
     <div v-if="showSubModal" class="modal-backdrop" @click.self="!savingSub && (showSubModal = false)">
       <div class="modal">
         <h3 class="modal-title">{{ subModalMode === 'add' ? 'Добавить подкаталог' : 'Изменить подкаталог' }}</h3>
+        <label class="form-row" style="margin-bottom:10px">
+          <span class="form-label">Каталог:</span>
+          <span class="form-input-static">{{ catalogs.find(c => c.id === subModalCatalogId)?.name ?? '—' }}</span>
+        </label>
         <label class="form-row">
           <span class="form-label">Название:</span>
           <input v-model="subModalName" class="form-input" :disabled="savingSub" @keyup.enter="saveSubModal" />
         </label>
-        <div class="modal-image-section">
-          <p class="modal-image-label">Фото подкатегории:</p>
-          <div v-if="subModalImgPreview" class="modal-image-preview">
-            <img :src="subModalImgPreview" alt="" />
-            <button class="modal-image-remove" :disabled="savingSub" @click="removeSubImg">&#10005;</button>
-          </div>
-          <label v-else class="upload-btn" :class="{ 'upload-btn--disabled': savingSub }">
-            <input type="file" accept="image/*" hidden :disabled="savingSub" @change="onSubImgSelected" />
-            + Добавить фото
-          </label>
-        </div>
         <div class="form-actions" style="margin-top:20px">
           <button class="btn btn--green" :disabled="savingSub" @click="saveSubModal">
             <span v-if="savingSub" class="btn-spinner"></span>
@@ -931,84 +803,104 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
 
 <style lang="scss" scoped>
 .admin-page {
+  @include page-layout;
   background: #ececec;
-  min-height: calc(100vh - 110px);
-  padding: 20px 0 40px;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
+.container { @include container; }
 
 .admin-layout {
   display: flex;
-  background: white;
+  background: #fff;
   border: 1px solid #d0d0d0;
-  border-radius: 4px;
+  border-radius: $radius-sm;
   overflow: hidden;
   min-height: 500px;
+
+  @include below-md { flex-direction: column; }
 }
 
 .admin-sidebar {
   width: 220px;
   flex-shrink: 0;
   border-right: 1px solid #d0d0d0;
+
+  @include below-md {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #d0d0d0;
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
 
 .sidebar-tab {
   display: block;
   width: 100%;
-  padding: 12px 16px;
-  background: white;
+  padding: 12px $gap-md;
+  background: #fff;
   border: none;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid $color-border-light;
   text-align: left;
-  font-size: 13px;
+  font-size: $font-base;
   color: #333;
   cursor: pointer;
   line-height: 1.4;
   transition: background 0.15s;
 
-  &:hover { background: #f5f5f5; }
+  &:hover { background: $color-bg-light; }
   &--active { background: #ececec; font-weight: 600; }
+
+  @include below-md {
+    width: auto;
+    flex: 1;
+    border-bottom: none;
+    border-right: 1px solid $color-border-light;
+    text-align: center;
+    &:last-child { border-right: none; }
+  }
 }
 
 .admin-content {
   flex: 1;
-  padding: 24px;
-  background: #f5f5f5;
+  padding: $gap-lg;
+  background: $color-bg-light;
+  min-width: 0;
+
+  @include below-sm { padding: $gap-md; }
 }
 
 .section-box {
-  background: white;
+  background: #fff;
   border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  padding: 20px 24px;
+  border-radius: $radius-sm;
+  padding: $gap-md $gap-lg;
+
+  @include below-sm { padding: $gap-md; }
 }
 
 .section-title {
   text-align: center;
-  font-size: 15px;
+  font-size: $font-md;
   font-weight: 600;
   color: #333;
   margin-bottom: 14px;
 }
 
-// --- section header with actions ---
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: $gap-sm;
 
   .section-title { margin-bottom: 0; }
 }
 
 .section-actions {
   display: flex;
-  gap: 8px;
+  gap: $gap-sm;
 
   &--disabled {
     opacity: 0.45;
@@ -1016,17 +908,30 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   }
 }
 
-// --- buttons ---
+.admin-search-input {
+  flex: 1;
+  max-width: 180px;
+  height: 26px;
+  padding: 0 $gap-sm;
+  border: 1px solid #ccc;
+  border-radius: $radius-sm;
+  font-size: $font-sm;
+  font-family: inherit;
+  background: #fafafa;
+
+  &:focus { outline: none; border-color: $color-primary; background: #fff; }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   height: 30px;
-  padding: 0 16px;
+  padding: 0 $gap-md;
   border: none;
-  border-radius: 3px;
-  font-size: 13px;
+  border-radius: $radius-sm;
+  font-size: $font-base;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -1035,11 +940,11 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   &:hover:not(:disabled) { filter: brightness(0.9); }
   &:disabled { opacity: 0.45; cursor: not-allowed; }
 
-  &--green  { background: #2ecc40; color: white; }
-  &--orange { background: #f4b942; color: white; }
-  &--red    { background: #e74c3c; color: white; }
+  &--green  { background: #2ecc40; color: #fff; }
+  &--orange { background: $color-primary; color: #fff; }
+  &--red    { background: $color-danger; color: #fff; }
 
-  &--sm { height: 24px; padding: 0 10px; font-size: 12px; }
+  &--sm { height: 24px; padding: 0 10px; font-size: $font-sm; }
 }
 
 .btn-spinner {
@@ -1047,21 +952,15 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   width: 13px;
   height: 13px;
   border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: white;
-  border-radius: 50%;
+  border-top-color: #fff;
+  border-radius: $radius-full;
   animation: btn-spin 0.55s linear infinite;
   flex-shrink: 0;
 
-  &--sm {
-    width: 10px;
-    height: 10px;
-    border-width: 1.5px;
-  }
+  &--sm { width: 10px; height: 10px; border-width: 1.5px; }
 }
 
-@keyframes btn-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes btn-spin { to { transform: rotate(360deg); } }
 
 .upload-btn--disabled {
   opacity: 0.45;
@@ -1069,68 +968,75 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   pointer-events: none;
 }
 
-// --- carousel ---
 .carousel-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: $gap-sm;
   margin-bottom: 4px;
 }
 
 .carousel-items {
   display: flex;
-  gap: 8px;
+  gap: $gap-sm;
   flex: 1;
   min-height: 36px;
   align-items: center;
+
+  &--overflow { overflow: hidden; }
+
+  &__inner {
+    display: flex;
+    gap: $gap-sm;
+    width: 100%;
+    align-items: center;
+  }
 }
 
 .carousel-tag {
   flex: 1;
   height: 34px;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  background: white;
-  font-size: 13px;
+  border-radius: $radius-sm;
+  background: #fff;
+  font-size: $font-base;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 
-  &:hover { background: #f5f5f5; }
-  &--active { background: #fff3cd; border-color: #f4b942; font-weight: 600; }
+  &:hover { background: $color-bg-light; }
+  &--active { background: #fff3cd; border-color: $color-primary; font-weight: 600; }
 }
 
 .arrow {
   width: 28px;
   height: 28px;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  background: white;
+  border-radius: $radius-sm;
+  background: #fff;
   cursor: pointer;
-  font-size: 16px;
+  font-size: $font-lg;
   line-height: 1;
   flex-shrink: 0;
   transition: background 0.15s;
 
-  &:hover:not(:disabled) { background: #f5f5f5; }
+  &:hover:not(:disabled) { background: $color-bg-light; }
   &:disabled { opacity: 0.35; cursor: default; }
 }
 
 .empty-hint {
-  font-size: 12px;
-  color: #aaa;
+  font-size: $font-sm;
+  color: $color-text-faint;
 }
 
-// --- image upload ---
 .image-upload-section {
   max-width: 480px;
-  margin-top: 16px;
+  margin-top: $gap-md;
   margin-bottom: 4px;
 }
 
 .image-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: $gap-sm;
   margin-bottom: 10px;
 }
 
@@ -1138,18 +1044,14 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   position: relative;
   width: 80px;
   height: 80px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
   overflow: hidden;
   flex-shrink: 0;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  img { width: 100%; height: 100%; object-fit: cover; }
 
-  &--new { border-color: #f4b942; }
+  &--new { border-color: $color-primary; }
 
   &__remove {
     position: absolute;
@@ -1158,18 +1060,16 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
     width: 18px;
     height: 18px;
     border: none;
-    border-radius: 50%;
+    border-radius: $radius-full;
     background: rgba(0,0,0,0.55);
-    color: white;
+    color: #fff;
     font-size: 10px;
     line-height: 1;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
     padding: 0;
 
-    &:hover { background: #e74c3c; }
+    &:hover { background: $color-danger; }
   }
 }
 
@@ -1177,19 +1077,18 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   display: inline-block;
   height: 30px;
   padding: 0 14px;
-  background: #f5f5f5;
+  background: $color-bg-light;
   border: 1px dashed #bbb;
-  border-radius: 3px;
-  font-size: 13px;
-  color: #555;
+  border-radius: $radius-sm;
+  font-size: $font-base;
+  color: $color-text;
   cursor: pointer;
   line-height: 30px;
   transition: border-color 0.15s, background 0.15s;
 
-  &:hover { border-color: #f4b942; background: #fffbf0; }
+  &:hover { border-color: $color-primary; background: $color-primary-light; }
 }
 
-// --- product filter bar ---
 .product-filter-bar {
   margin-top: 12px;
   margin-bottom: 4px;
@@ -1201,9 +1100,9 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   gap: 6px;
   padding: 4px 10px;
   background: #fff3cd;
-  border: 1px solid #f4b942;
-  border-radius: 12px;
-  font-size: 12px;
+  border: 1px solid $color-primary;
+  border-radius: $radius-pill;
+  font-size: $font-sm;
   font-weight: 500;
   color: #7a5a00;
 
@@ -1218,7 +1117,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
     border: none;
     padding: 0;
     cursor: pointer;
-    font-size: 11px;
+    font-size: $font-xs;
     color: inherit;
     opacity: 0.7;
     line-height: 1;
@@ -1227,7 +1126,6 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   }
 }
 
-// --- product cards ---
 .product-cards-viewport {
   flex: 1;
   overflow: hidden;
@@ -1240,7 +1138,6 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
   align-items: flex-start;
 }
 
-// slide animations
 .slide-left-enter-active,
 .slide-left-leave-active,
 .slide-right-enter-active,
@@ -1254,53 +1151,92 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
 
 .product-card {
   flex: 0 0 calc((100% - 24px) / 3);
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
   overflow: hidden;
-  background: white;
+  background: #fff;
 
   &__img {
     width: 100%;
     aspect-ratio: 4/3;
     background: #d0d0d0;
     overflow: hidden;
+    cursor: pointer;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    &:hover img { opacity: 0.85; }
   }
 
-  &__body {
-    padding: 8px;
-  }
-
-  &__name {
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-
-  &__price {
-    font-size: 13px;
-    color: #333;
-    margin-bottom: 8px;
-  }
-
-  &__actions {
-    display: flex;
-    gap: 6px;
-  }
+  &__body { padding: $gap-sm; }
+  &__name { font-size: $font-base; font-weight: 500; margin-bottom: 4px; }
+  &__price { font-size: $font-base; color: #333; margin-bottom: $gap-sm; }
+  &__actions { display: flex; gap: 6px; }
 }
 
-// --- product form ---
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 480px;
+.modal-image-section { margin-top: $gap-md; }
+
+.modal-image-label {
+  font-size: $font-base;
+  color: #333;
+  margin-bottom: $gap-sm;
+}
+
+.modal-image-preview {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.modal-image-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: $radius-full;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  @include flex-center;
+  padding: 0;
+  transition: background 0.15s;
+
+  &:hover { background: $color-danger; }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  @include flex-center;
+  z-index: 100;
+}
+
+.modal {
+  background: #fff;
+  border-radius: $radius-md;
+  padding: 28px 32px;
+  width: 380px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+
+  @include below-xs { width: calc(100vw - 32px); padding: $gap-md; }
+  &--wide { width: 560px; }
+}
+
+.modal-title {
+  text-align: center;
+  font-size: $font-lg;
+  font-weight: 600;
+  margin-bottom: $gap-md;
 }
 
 .form-row {
@@ -1312,7 +1248,7 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
 .form-label {
   width: 100px;
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: $font-base;
   color: #333;
   text-align: right;
 }
@@ -1320,183 +1256,40 @@ function removeChar(i: number) { chars.value.splice(i, 1) }
 .form-input {
   flex: 1;
   height: 30px;
-  padding: 0 8px;
+  padding: 0 $gap-sm;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 13px;
+  border-radius: $radius-sm;
+  font-size: $font-base;
   font-family: inherit;
 
-  &:focus { outline: none; border-color: #f4b942; }
-  &:disabled { background: #f5f5f5; }
+  &:focus { outline: none; border-color: $color-primary; }
+  &:disabled { background: $color-bg-light; }
 }
 
 select.form-input { height: 32px; }
 
-.form-textarea {
-  height: auto;
-  padding: 6px 8px;
-  resize: vertical;
-  line-height: 1.5;
-}
-
-.form-row--top {
-  align-items: flex-start;
-
-  .form-label { padding-top: 6px; }
+.form-input-static {
+  flex: 1;
+  height: 30px;
+  padding: 0 $gap-sm;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  font-size: $font-base;
+  background: $color-bg-light;
+  color: $color-text-secondary;
+  display: flex;
+  align-items: center;
 }
 
 .form-actions {
   display: flex;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: $gap-md;
   justify-content: flex-end;
   max-width: 480px;
+  flex-wrap: wrap;
 }
 
-.char-section {
-  margin-bottom: 14px;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-
-  &__label {
-    font-size: 13px;
-    color: #333;
-    font-weight: 500;
-  }
-}
-
-.char-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 480px;
-}
-
-.char-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.char-input {
-  flex: 1;
-}
-
-.char-sep {
-  font-size: 14px;
-  color: #888;
-  flex-shrink: 0;
-}
-
-.char-delete {
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 50%;
-  background: #fce;
-  color: #e74c3c;
-  font-size: 11px;
-  cursor: pointer;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background 0.15s;
-
-  &:hover { background: #e74c3c; color: white; }
-}
-
-.char-empty {
-  font-size: 12px;
-  color: #aaa;
-  margin: 0;
-}
-
-// --- modal image section ---
-.modal-image-section {
-  margin-top: 16px;
-}
-
-.modal-image-label {
-  font-size: 13px;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.modal-image-preview {
-  position: relative;
-  width: 140px;
-  height: 140px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-}
-
-.modal-image-remove {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 22px;
-  height: 22px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  color: white;
-  font-size: 11px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background 0.15s;
-
-  &:hover { background: #e74c3c; }
-}
-
-// --- modal ---
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  background: white;
-  border-radius: 8px;
-  padding: 28px 32px;
-  width: 380px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-
-  &--wide { width: 560px; }
-}
-
-.modal-title {
-  text-align: center;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 20px;
-}
-
-// --- notifications ---
 .notif-container {
   position: fixed;
   top: 16px;
@@ -1504,7 +1297,7 @@ select.form-input { height: 32px; }
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $gap-sm;
   z-index: 9999;
   pointer-events: none;
   min-width: 280px;
@@ -1513,15 +1306,15 @@ select.form-input { height: 32px; }
 
 .notif {
   padding: 10px 18px;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: $radius-sm;
+  font-size: $font-base;
   font-weight: 500;
-  color: white;
+  color: #fff;
   cursor: pointer;
   pointer-events: all;
   box-shadow: 0 2px 12px rgba(0,0,0,0.18);
 
-  &--error   { background: #e74c3c; }
+  &--error   { background: $color-danger; }
   &--success { background: #2ecc40; }
   &--info    { background: #3498db; }
 }
@@ -1531,28 +1324,27 @@ select.form-input { height: 32px; }
 .notif-enter-from   { opacity: 0; transform: translateY(-16px); }
 .notif-leave-to     { opacity: 0; transform: translateY(-8px); }
 
-// ── orders ──────────────────────────────────────────────────────────────────
 .orders-filter-bar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 0 8px;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 8px;
+  gap: $gap-sm;
+  padding: 10px 0 $gap-sm;
+  border-bottom: 1px solid $color-border-light;
+  margin-bottom: $gap-sm;
 }
 
 .orders-filter-input {
   height: 28px;
-  padding: 0 8px;
+  padding: 0 $gap-sm;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 13px;
+  border-radius: $radius-sm;
+  font-size: $font-base;
   font-family: inherit;
   flex: 1;
   min-width: 150px;
   max-width: 220px;
-  &:focus { outline: none; border-color: #f4b942; }
+  &:focus { outline: none; border-color: $color-primary; }
 }
 
 .orders-filter-dates {
@@ -1565,16 +1357,16 @@ select.form-input { height: 32px; }
   height: 28px;
   padding: 0 6px;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 12px;
+  border-radius: $radius-sm;
+  font-size: $font-sm;
   font-family: inherit;
   width: 128px;
-  &:focus { outline: none; border-color: #f4b942; }
+  &:focus { outline: none; border-color: $color-primary; }
 }
 
 .orders-filter-sep {
-  font-size: 12px;
-  color: #999;
+  font-size: $font-sm;
+  color: $color-text-muted;
   flex-shrink: 0;
 }
 
@@ -1582,66 +1374,66 @@ select.form-input { height: 32px; }
   height: 28px;
   padding: 0 6px;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 12px;
+  border-radius: $radius-sm;
+  font-size: $font-sm;
   font-family: inherit;
-  background: white;
+  background: #fff;
   cursor: pointer;
   flex-shrink: 0;
-  &:focus { outline: none; border-color: #f4b942; }
+  &:focus { outline: none; border-color: $color-primary; }
 }
 
 .orders-sort-btn {
   height: 28px;
   padding: 0 10px;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  background: white;
-  font-size: 12px;
+  border-radius: $radius-sm;
+  background: #fff;
+  font-size: $font-sm;
   font-family: inherit;
   cursor: pointer;
   flex-shrink: 0;
   transition: border-color 0.15s, background 0.15s;
-  &:hover { border-color: #f4b942; background: #fffbf0; }
+  &:hover { border-color: $color-primary; background: $color-primary-light; }
 }
 
 .orders-reset-btn {
-  background: #eee;
-  color: #555;
+  background: $color-bg;
+  color: $color-text;
   &:hover:not(:disabled) { filter: brightness(0.92); }
 }
 
 .orders-day-header {
-  font-size: 12px;
+  font-size: $font-sm;
   font-weight: 600;
-  color: #666;
+  color: $color-text-secondary;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 10px 6px 6px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid $color-border-light;
   margin-bottom: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
   user-select: none;
-  border-radius: 3px;
+  border-radius: $radius-sm;
   transition: background 0.15s;
 
   &:first-child { padding-top: 4px; }
-  &:hover { background: #f0f0f0; }
+  &:hover { background: $color-bg; }
 }
 
 .orders-day-count {
   font-weight: 400;
-  color: #aaa;
+  color: $color-text-faint;
   text-transform: none;
   letter-spacing: 0;
 }
 
 .orders-day-chevron {
-  font-size: 12px;
-  color: #bbb;
+  font-size: $font-sm;
+  color: $color-text-faint;
   flex-shrink: 0;
   transition: transform 0.2s ease;
 
@@ -1656,9 +1448,9 @@ select.form-input { height: 32px; }
 
 .orders-loading {
   text-align: center;
-  padding: 24px;
-  color: #888;
-  font-size: 13px;
+  padding: $gap-lg;
+  color: $color-text-muted;
+  font-size: $font-base;
 }
 
 .orders-list {
@@ -1668,8 +1460,8 @@ select.form-input { height: 32px; }
 }
 
 .order-row {
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
   overflow: hidden;
 
   &__head {
@@ -1681,27 +1473,27 @@ select.form-input { height: 32px; }
     cursor: pointer;
     flex-wrap: wrap;
     transition: background 0.15s;
-    &:hover { background: #f0f0f0; }
+    &:hover { background: $color-bg; }
   }
 
   &__id {
-    font-size: 13px;
+    font-size: $font-base;
     font-weight: 700;
-    color: #2c3e50;
+    color: $color-dark;
     min-width: 36px;
     flex-shrink: 0;
   }
 
   &__date {
-    font-size: 12px;
-    color: #888;
+    font-size: $font-sm;
+    color: $color-text-muted;
     flex-shrink: 0;
     min-width: 110px;
   }
 
   &__user {
     flex: 1;
-    font-size: 13px;
+    font-size: $font-base;
     color: #333;
     min-width: 120px;
     overflow: hidden;
@@ -1710,44 +1502,42 @@ select.form-input { height: 32px; }
   }
 
   &__email {
-    font-size: 11px;
-    color: #aaa;
+    font-size: $font-xs;
+    color: $color-text-faint;
   }
 
   &__total {
-    font-size: 13px;
+    font-size: $font-base;
     font-weight: 600;
-    color: #2c3e50;
+    color: $color-dark;
     flex-shrink: 0;
     min-width: 90px;
     text-align: right;
   }
 
-  &__status-wrap {
-    flex-shrink: 0;
-  }
+  &__status-wrap { flex-shrink: 0; }
 
   &__toggle {
     font-size: 10px;
-    color: #aaa;
+    color: $color-text-faint;
     flex-shrink: 0;
     width: 14px;
     text-align: center;
   }
 
   &__items {
-    border-top: 1px solid #eee;
+    border-top: 1px solid $color-border-light;
     padding: 10px 12px 6px;
-    background: white;
+    background: #fff;
   }
 
   &__footer {
     display: flex;
-    gap: 16px;
+    gap: $gap-md;
     justify-content: flex-end;
-    padding-top: 8px;
-    border-top: 1px solid #f0f0f0;
-    margin-top: 8px;
+    padding-top: $gap-sm;
+    border-top: 1px solid $color-bg;
+    margin-top: $gap-sm;
     flex-wrap: wrap;
   }
 }
@@ -1759,7 +1549,7 @@ select.form-input { height: 32px; }
   color: #c62828;
   border: 1px solid #ef9a9a;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: $font-xs;
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
@@ -1769,13 +1559,13 @@ select.form-input { height: 32px; }
   height: 26px;
   padding: 0 6px;
   border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 12px;
+  border-radius: $radius-sm;
+  font-size: $font-sm;
   cursor: pointer;
   outline: none;
   transition: border-color 0.15s;
   &:disabled { opacity: 0.5; cursor: not-allowed; }
-  &:focus { border-color: #f4b942; }
+  &:focus { border-color: $color-primary; }
 
   &--pending           { background: #fff8e1; color: #795548; }
   &--processing        { background: #e3f2fd; color: #1565c0; }
@@ -1791,25 +1581,22 @@ select.form-input { height: 32px; }
   align-items: center;
   gap: 10px;
   padding: 6px 0;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid $color-bg-light;
   &:last-of-type { border-bottom: none; }
 
   &__img {
     width: 40px;
     height: 40px;
     object-fit: cover;
-    border-radius: 3px;
-    border: 1px solid #eee;
+    border-radius: $radius-sm;
+    border: 1px solid $color-border-light;
     flex-shrink: 0;
-
-    &--placeholder {
-      background: #eee;
-    }
+    &--placeholder { background: $color-border-light; }
   }
 
   &__name {
     flex: 1;
-    font-size: 13px;
+    font-size: $font-base;
     color: #333;
     min-width: 0;
     overflow: hidden;
@@ -1818,25 +1605,25 @@ select.form-input { height: 32px; }
   }
 
   &__qty {
-    font-size: 12px;
-    color: #666;
+    font-size: $font-sm;
+    color: $color-text-secondary;
     flex-shrink: 0;
     min-width: 44px;
     text-align: right;
   }
 
   &__price {
-    font-size: 12px;
-    color: #888;
+    font-size: $font-sm;
+    color: $color-text-muted;
     flex-shrink: 0;
     min-width: 72px;
     text-align: right;
   }
 
   &__subtotal {
-    font-size: 13px;
+    font-size: $font-base;
     font-weight: 600;
-    color: #2c3e50;
+    color: $color-dark;
     flex-shrink: 0;
     min-width: 80px;
     text-align: right;
@@ -1848,8 +1635,8 @@ select.form-input { height: 32px; }
   display: flex;
   align-items: flex-start;
   gap: 4px;
-  font-size: 12px;
-  color: #2c3e50;
+  font-size: $font-sm;
+  color: $color-dark;
   font-weight: 500;
   text-align: left;
   order: -1;
@@ -1858,50 +1645,44 @@ select.form-input { height: 32px; }
 .order-footer__phone,
 .order-footer__delivery,
 .order-footer__total {
-  font-size: 12px;
-  color: #555;
+  font-size: $font-sm;
+  color: $color-text;
 }
 
 .order-footer__total {
   font-weight: 700;
-  color: #2c3e50;
+  color: $color-dark;
 }
 
 .orders-pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 16px 0 4px;
+  gap: $gap-md;
+  padding: $gap-md 0 4px;
 
   &__btn {
-    padding: 6px 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 6px $gap-md;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
     background: #fff;
-    font-size: 13px;
+    font-size: $font-base;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
 
-    &:hover:not(:disabled) {
-      background: #f5f5f5;
-      border-color: #bbb;
-    }
-    &:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
+    &:hover:not(:disabled) { background: $color-bg-light; border-color: #bbb; }
+    &:disabled { opacity: 0.4; cursor: default; }
   }
 
   &__info {
-    font-size: 13px;
-    color: #555;
+    font-size: $font-base;
+    color: $color-text;
     white-space: nowrap;
   }
 
   &__total {
-    color: #aaa;
-    font-size: 12px;
+    color: $color-text-faint;
+    font-size: $font-sm;
     margin-left: 4px;
   }
 }

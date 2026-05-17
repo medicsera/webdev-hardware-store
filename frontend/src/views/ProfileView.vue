@@ -48,62 +48,71 @@ const activeTab = ref<Tab>('personal')
 
 <style lang="scss" scoped>
 .profile-page {
+  @include page-layout;
   background: #ececec;
-  min-height: calc(100vh - 110px);
-  padding: 20px 0 40px;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
+.container { @include container; }
 
 .profile-layout {
   display: flex;
-  gap: 0;
-  background: white;
+  background: #fff;
   border: 1px solid #d0d0d0;
-  border-radius: 4px;
+  border-radius: $radius-sm;
   overflow: hidden;
   min-height: 400px;
+
+  @include below-md { flex-direction: column; }
 }
 
 .profile-sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: white;
+  background: #fff;
   border-right: 1px solid #d0d0d0;
+
+  @include below-md {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #d0d0d0;
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
 
 .sidebar-tab {
   display: block;
   width: 100%;
-  padding: 12px 16px;
-  background: white;
+  padding: 12px $gap-md;
+  background: #fff;
   border: none;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid $color-border-light;
   text-align: left;
-  font-size: 13px;
+  font-size: $font-base;
   color: #333;
   cursor: pointer;
   transition: background 0.15s;
 
-  &:hover {
-    background: #f5f5f5;
-  }
+  &:hover { background: $color-bg-light; }
+  &--active { background: #ececec; font-weight: 600; }
 
-  &--active {
-    background: #ececec;
-    font-weight: 600;
+  @include below-md {
+    width: auto;
+    flex: 1;
+    border-bottom: none;
+    border-right: 1px solid $color-border-light;
+    text-align: center;
+    &:last-child { border-right: none; }
   }
 }
 
 .profile-content {
   flex: 1;
   min-width: 0;
-  padding: 24px;
-  background: #f5f5f5;
+  padding: $gap-lg;
+  background: $color-bg-light;
   overflow: hidden;
+
+  @include below-sm { padding: $gap-md; }
 }
 </style>
