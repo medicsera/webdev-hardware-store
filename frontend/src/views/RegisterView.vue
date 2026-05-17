@@ -14,10 +14,20 @@ const password = ref('')
 const isLoading = ref(false)
 const error = ref('')
 
+function isValidPhone(value: string): boolean {
+  const digits = value.replace(/\D/g, '')
+  return digits.length === 11 && (digits[0] === '7' || digits[0] === '8')
+}
+
 const handleSubmit = async () => {
   error.value = ''
 
-  // …validation omitted for brevity (same as before) …
+  if (!firstName.value.trim()) { error.value = 'Введите имя'; return }
+  if (!lastName.value.trim()) { error.value = 'Введите фамилию'; return }
+  if (!phone.value.trim()) { error.value = 'Введите номер телефона'; return }
+  if (!isValidPhone(phone.value)) { error.value = 'Некорректный номер телефона'; return }
+  if (!email.value.trim()) { error.value = 'Введите почту'; return }
+  if (password.value.length < 6) { error.value = 'Пароль должен содержать минимум 6 символов'; return }
 
   isLoading.value = true
 

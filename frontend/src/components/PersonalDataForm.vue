@@ -40,6 +40,11 @@ onMounted(() => {
   }
 })
 
+function isValidPhone(value: string): boolean {
+  const digits = value.replace(/\D/g, '')
+  return digits.length === 11 && (digits[0] === '7' || digits[0] === '8')
+}
+
 const handleSubmit = async () => {
   error.value = ''
   savedMessage.value = ''
@@ -54,6 +59,10 @@ const handleSubmit = async () => {
   }
   if (!form.value.phone.trim()) {
     error.value = 'Введите номер телефона'
+    return
+  }
+  if (!isValidPhone(form.value.phone)) {
+    error.value = 'Некорректный номер телефона'
     return
   }
   if (!form.value.email.trim()) {
