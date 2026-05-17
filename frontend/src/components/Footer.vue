@@ -73,42 +73,33 @@ const currentYear = computed(() => new Date().getFullYear())
 
 <style lang="scss" scoped>
 .app-footer {
-  background-color: #3a3a3a;
-  color: #ffffff;
-  padding: 40px 0 20px;
+  background-color: $color-bg-dark;
+  color: #fff;
+  padding: $gap-xl 0 $gap-md;
   margin-top: 60px;
   width: 100%;
 }
 
 .footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+  @include container;
 }
 
 .footer-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 40px;
-  margin-bottom: 40px;
+  gap: $gap-xl;
+  margin-bottom: $gap-xl;
 
-  @media (max-width: 968px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
+  @include below-lg { grid-template-columns: repeat(2, 1fr); gap: 30px; }
+  @include below-sm { grid-template-columns: 1fr; gap: 30px; }
 }
 
 .footer-column {
   h3 {
-    font-size: 16px;
+    font-size: $font-lg;
     font-weight: 600;
-    margin-bottom: 16px;
-    color: #ffffff;
+    margin-bottom: $gap-md;
+    color: #fff;
   }
 }
 
@@ -119,28 +110,22 @@ const currentYear = computed(() => new Date().getFullYear())
 
   li {
     margin-bottom: 10px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
+    &:last-child { margin-bottom: 0; }
 
     a {
       color: #cccccc;
       text-decoration: none;
-      font-size: 14px;
+      font-size: $font-md;
       transition: color 0.2s;
-
-      &:hover {
-        color: #42b983;
-      }
+      &:hover { color: $color-success-light; }
     }
   }
 }
 
 .footer-address {
   p {
-    margin: 0 0 8px;
-    font-size: 14px;
+    margin: 0 0 $gap-sm;
+    font-size: $font-md;
     color: #cccccc;
     line-height: 1.5;
   }
@@ -148,18 +133,18 @@ const currentYear = computed(() => new Date().getFullYear())
 
 .footer-hours {
   margin-top: 12px !important;
-  color: #ffffff;
+  color: #fff;
   font-weight: 500;
 }
 
 .footer-bottom {
   border-top: 1px solid #555555;
-  padding-top: 20px;
+  padding-top: $gap-md;
   text-align: center;
 
   p {
     margin: 0;
-    font-size: 13px;
+    font-size: $font-base;
     color: #999999;
   }
 }

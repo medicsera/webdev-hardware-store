@@ -289,12 +289,12 @@ const handleLogout = () => {
 </template>
 
 <style lang="scss" scoped>
-.app-header{
-  display: inline;
+.app-header {
+  display: block;
   position: sticky;
   top: 0;
   z-index: 100;
-  background: white;
+  background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -302,9 +302,14 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   justify-content: space-around;
+  gap: $gap-sm;
   margin: 30px 10%;
   height: 50px;
   position: relative;
+
+  @include below-lg { margin: 24px 5%; }
+  @include below-md { margin: 16px $container-pad; }
+  @include below-sm { margin: 12px $gap-md; gap: $gap-xs; }
 }
 
 .logo {
@@ -312,24 +317,33 @@ const handleLogout = () => {
   height: 50px;
   border-radius: 10px;
   cursor: pointer;
+  flex-shrink: 0;
+
+  @include below-sm { height: 38px; }
 }
 
-.catalog{
+.catalog {
   display: flex;
   align-items: center;
   justify-content: space-around;
+  gap: $gap-xs;
   height: 100%;
   width: 150px;
-  border: 2px;
+  border: none;
   border-radius: 10px;
   font-size: $default-size;
-  background-color: $light-orange-color;
+  background-color: $color-primary;
   cursor: pointer;
   transition: background-color 0.2s;
+  flex-shrink: 0;
 
-  &--active {
-    background-color: #d4a035;
-  }
+  &--active { background-color: $color-primary-dark; }
+
+  @include below-md { width: 48px; }
+}
+
+.catalog-label {
+  @include below-md { display: none; }
 }
 
 .catalog-dropdown {
@@ -338,142 +352,138 @@ const handleLogout = () => {
   left: 0;
   right: 0;
   display: flex;
-  background: white;
+  background: #fff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-top: 1px solid #eee;
+  border-top: 1px solid $color-border-light;
   z-index: 99;
   min-height: 320px;
+
+  @include below-md {
+    flex-direction: column;
+    min-height: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
 }
 
 .catalog-categories {
   width: 280px;
-  border-right: 1px solid #eee;
-  padding: 8px 0;
+  border-right: 1px solid $color-border-light;
+  padding: $gap-sm 0;
   flex-shrink: 0;
+
+  @include below-md {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid $color-border-light;
+    padding: $gap-xs 0;
+  }
 }
 
-.catalog-skeleton {
-  padding: 8px 16px;
-}
+.catalog-skeleton { padding: $gap-sm $gap-md; }
 
 .skeleton-line {
   height: 40px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
-  border-radius: 6px;
-  margin-bottom: 8px;
-}
-
-@keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  @include skeleton;
+  border-radius: $radius-md;
+  margin-bottom: $gap-sm;
 }
 
 .catalog-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 10px $gap-md;
   cursor: pointer;
   transition: background-color 0.15s;
 
-  &:hover,
-  &--active {
-    background-color: #f5f5f5;
-  }
+  &:hover, &--active { background-color: $color-bg-light; }
 
-  &__name {
-    font-size: 14px;
-    font-weight: 500;
-    color: #2c3e50;
-  }
+  &__name { font-size: $font-md; font-weight: 500; color: $color-dark; }
 
   &__arrow {
-    color: #ccc;
+    color: $color-border;
     transition: color 0.15s, transform 0.15s;
   }
 
-  &--active &__arrow {
-    color: #f4b942;
-    transform: translateX(2px);
-  }
+  &--active &__arrow { color: $color-primary; transform: translateX(2px); }
 
   &--all {
-    border-bottom: 1px solid #eee;
-    .catalog-item__name { color: #f4b942; font-weight: 600; }
+    border-bottom: 1px solid $color-border-light;
+    .catalog-item__name { color: $color-primary; font-weight: 600; }
   }
 }
 
 .catalog-subcategories {
   flex: 1;
-  padding: 16px 24px;
+  padding: $gap-md $gap-lg;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $gap-xs;
+
+  @include below-md { padding: $gap-sm $gap-md; }
 }
 
 .subcategory-item {
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #2c3e50;
+  padding: $gap-sm 12px;
+  font-size: $font-md;
+  color: $color-dark;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: $radius-md;
   transition: background-color 0.15s;
-
-  &:hover {
-    background-color: #f5f5f5;
-    color: #f4b942;
-  }
+  &:hover { background-color: $color-bg-light; color: $color-primary; }
 }
 
 .subcategory-placeholder {
   padding: 20px 12px;
-  font-size: 14px;
-  color: #999;
+  font-size: $font-md;
+  color: $color-text-muted;
 }
 
 .all-categories-link {
   display: inline-block;
   margin-top: auto;
   padding: 10px 12px 0;
-  font-size: 13px;
+  font-size: $font-base;
   font-weight: 600;
-  color: #f4b942;
+  color: $color-primary;
   text-decoration: none;
   transition: color 0.15s;
-
-  &:hover {
-    color: #d4a035;
-  }
+  &:hover { color: $color-primary-dark; }
 }
 
-// Slide-down transition
 .slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.2s ease;
-}
-
+.slide-down-leave-active  { transition: all 0.2s ease; }
 .slide-down-enter-from,
-.slide-down-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
+.slide-down-leave-to      { opacity: 0; transform: translateY(-8px); }
+
+// ─── Search ──────────────────────────────────────────────────────
 .search {
   display: flex;
   align-items: center;
+  flex: 1;
+  max-width: 700px;
   height: 90%;
   border-radius: 10px;
   background-color: $light-grey-color;
   position: relative;
+  min-width: 0;
+
+  @include below-lg { max-width: 480px; }
+  @include below-md { max-width: none; }
 
   &-input {
     font-size: $default-size;
-    width: 700px;
+    flex: 1;
+    width: 0;
+    min-width: 0;
     border: 0;
     outline: 0;
-    background: 0;
+    background: transparent;
     margin-left: 20px;
+
+    @include below-md { font-size: $font-md; margin-left: 12px; }
+    @include below-sm { font-size: $font-base; margin-left: 8px; }
   }
 
   &-icon {
@@ -481,6 +491,7 @@ const handleLogout = () => {
     cursor: pointer;
     opacity: 0.6;
     transition: opacity 0.15s;
+    flex-shrink: 0;
     &:hover { opacity: 1; }
   }
 }
@@ -490,8 +501,8 @@ const handleLogout = () => {
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #e8e8e8;
+  background: #fff;
+  border: 1px solid $color-border-light;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 200;
@@ -500,30 +511,29 @@ const handleLogout = () => {
   &__loading {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 14px 16px;
-    font-size: 13px;
-    color: #888;
+    gap: $gap-sm;
+    padding: 14px $gap-md;
+    font-size: $font-base;
+    color: $color-text-muted;
   }
 
   &__empty {
-    padding: 14px 16px;
-    font-size: 13px;
-    color: #aaa;
+    padding: 14px $gap-md;
+    font-size: $font-base;
+    color: $color-text-faint;
     text-align: center;
   }
 
   &__footer {
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 10px $gap-md;
+    font-size: $font-base;
     font-weight: 600;
-    color: #f4b942;
-    border-top: 1px solid #f0f0f0;
+    color: $color-primary;
+    border-top: 1px solid $color-bg;
     cursor: pointer;
     text-align: center;
     transition: background 0.15s;
-
-    &:hover { background: #fffbf0; }
+    &:hover { background: $color-primary-light; }
   }
 }
 
@@ -531,20 +541,19 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 10px $gap-md;
   cursor: pointer;
   transition: background 0.15s;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid $color-bg-light;
   &:last-of-type { border-bottom: none; }
-
   &:hover { background: #f9f9f9; }
 
   &__img {
     width: 44px;
     height: 44px;
     object-fit: cover;
-    border-radius: 6px;
-    border: 1px solid #eee;
+    border-radius: $radius-md;
+    border: 1px solid $color-border-light;
     flex-shrink: 0;
   }
 
@@ -557,52 +566,42 @@ const handleLogout = () => {
   }
 
   &__name {
-    font-size: 13px;
+    font-size: $font-base;
     font-weight: 500;
-    color: #2c3e50;
+    color: $color-dark;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  &__price {
-    font-size: 13px;
-    font-weight: 700;
-    color: #f4b942;
-  }
+  &__price { font-size: $font-base; font-weight: 700; color: $color-primary; }
 }
 
 .search-spinner {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid #ddd;
-  border-top-color: #f4b942;
-  border-radius: 50%;
+  border: 2px solid $color-border;
+  border-top-color: $color-primary;
+  border-radius: $radius-full;
   animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .search-fade-enter-active,
 .search-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .search-fade-enter-from,
-.search-fade-leave-to    { opacity: 0; transform: translateY(-4px); }
+.search-fade-leave-to     { opacity: 0; transform: translateY(-4px); }
+
+// ─── Contacts ────────────────────────────────────────────────────
 .contacts {
   width: 180px;
   height: 100%;
+  flex-shrink: 0;
 
-  &-div {
-    display: flex;
-    justify-content: center;
-  }
+  @include below-lg { display: none; }
 
-  &-telephone {
-    font-size: $default-size;
-  }
-
+  &-div { display: flex; justify-content: center; }
+  &-telephone { font-size: $default-size; }
   &-icons {
     display: flex;
     justify-content: space-between;
@@ -611,6 +610,7 @@ const handleLogout = () => {
   }
 }
 
+// ─── Cart ────────────────────────────────────────────────────────
 .cart {
   display: grid;
   justify-content: center;
@@ -620,33 +620,21 @@ const handleLogout = () => {
   cursor: pointer;
   position: relative;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
+  &:hover  { transform: translateY(-2px); }
+  &:active { transform: translateY(0); }
 
   &-btn {
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    background: 0;
+    background: transparent;
     border: 0;
     cursor: pointer;
-    transition: transform 0.2s ease;
-
-    img {
-      transition: transform 0.2s ease, filter 0.2s ease;
-    }
-
-    &:hover img {
-      transform: scale(1.1);
-      filter: drop-shadow(0 2px 4px rgba(244, 185, 66, 0.4));
-    }
+    img { transition: transform 0.2s ease, filter 0.2s ease; }
+    &:hover img { transform: scale(1.1); filter: drop-shadow(0 2px 4px rgba($color-primary, 0.4)); }
   }
 
   &-span {
@@ -654,11 +642,11 @@ const handleLogout = () => {
     font-size: $small-size;
     cursor: default;
     transition: color 0.2s ease;
+
+    @include below-sm { display: none; }
   }
 
-  &:hover &-span {
-    color: #f4b942;
-  }
+  &:hover &-span { color: $color-primary; }
 }
 
 .cart-badge {
@@ -668,9 +656,9 @@ const handleLogout = () => {
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
-  background: #e74c3c;
-  color: white;
-  font-size: 11px;
+  background: $color-danger;
+  color: #fff;
+  font-size: $font-xs;
   font-weight: 700;
   line-height: 18px;
   text-align: center;
@@ -680,11 +668,12 @@ const handleLogout = () => {
 }
 
 @keyframes badge-pop {
-  0% { transform: scale(0); }
-  70% { transform: scale(1.2); }
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
 
+// ─── Profile / User ──────────────────────────────────────────────
 .profile {
   display: grid;
   justify-content: center;
@@ -693,31 +682,19 @@ const handleLogout = () => {
   height: 100%;
   cursor: pointer;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
+  &:hover  { transform: translateY(-2px); }
+  &:active { transform: translateY(0); }
 
   &-btn {
     display: flex;
     justify-content: center;
-    background: 0;
+    background: transparent;
     border: 0;
     cursor: pointer;
-    transition: transform 0.2s ease;
-
-    img {
-      transition: transform 0.2s ease, filter 0.2s ease;
-    }
-
-    &:hover img {
-      transform: scale(1.1) rotate(5deg);
-      filter: drop-shadow(0 2px 4px rgba(244, 185, 66, 0.4));
-    }
+    img { transition: transform 0.2s ease, filter 0.2s ease; }
+    &:hover img { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 2px 4px rgba($color-primary, 0.4)); }
   }
 
   &-span {
@@ -725,19 +702,20 @@ const handleLogout = () => {
     font-size: $small-size;
     cursor: default;
     transition: color 0.2s ease;
+
+    @include below-sm { display: none; }
   }
 
-  &:hover &-span {
-    color: #f4b942;
-  }
+  &:hover &-span { color: $color-primary; }
 }
 
 .user-menu {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: $gap-sm;
   height: 100%;
+  flex-shrink: 0;
 }
 
 .user-info {
@@ -747,39 +725,28 @@ const handleLogout = () => {
   gap: 2px;
   cursor: pointer;
   transition: transform 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
+  &:hover  { transform: translateY(-2px); }
+  &:active { transform: translateY(0); }
 }
 
 .user-btn {
   display: flex;
   justify-content: center;
-  background: 0;
+  background: transparent;
   border: 0;
   cursor: pointer;
   padding: 0;
-
-  img {
-    transition: transform 0.2s ease, filter 0.2s ease;
-  }
-
-  &:hover img {
-    transform: scale(1.1) rotate(5deg);
-    filter: drop-shadow(0 2px 4px rgba(244, 185, 66, 0.4));
-  }
+  img { transition: transform 0.2s ease, filter 0.2s ease; }
+  &:hover img { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 2px 4px rgba($color-primary, 0.4)); }
 }
 
 .user-name {
-  font-size: 13px;
+  font-size: $font-base;
   font-weight: 600;
-  color: #2c3e50;
+  color: $color-dark;
   white-space: nowrap;
+
+  @include below-sm { display: none; }
 }
 
 .logout-btn {
@@ -789,14 +756,9 @@ const handleLogout = () => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
-  color: #999;
+  padding: $gap-xs;
+  color: $color-text-muted;
   transition: color 0.2s;
-
-  &:hover {
-    color: #e74c3c;
-  }
+  &:hover { color: $color-danger; }
 }
-
-
 </style>
