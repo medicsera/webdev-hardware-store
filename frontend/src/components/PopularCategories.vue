@@ -78,42 +78,47 @@ const handleImageError = (e: Event) => {
 .popular-categories {
   margin: 0 8.5% 48px;
 
+  @include below-md { margin: 0 4% 32px; }
+  @include below-sm { margin: 0 $gap-sm $gap-lg; }
+
   &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: $gap-lg;
   }
 
   &__title {
-    font-size: 24px;
+    font-size: $font-3xl;
     font-weight: 700;
-    color: #2c3e50;
+    color: $color-dark;
     margin: 0;
+
+    @include below-sm { font-size: $font-xl; }
   }
 
   &__all {
-    font-size: 16px;
-    color: #42b983;
+    font-size: $font-lg;
+    color: $color-success-light;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
-
-    &:hover {
-      color: #369970;
-    }
+    &:hover { color: $color-success; }
   }
 
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 20px;
+
+    @include below-md { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    @include below-xs { grid-template-columns: repeat(2, 1fr); }
   }
 }
 
 .category-card {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: $radius-lg;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
@@ -126,15 +131,13 @@ const handleImageError = (e: Event) => {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   }
 
-  &--skeleton {
-    pointer-events: none;
-  }
+  &--skeleton { pointer-events: none; }
 
   &__image-wrapper {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    background: #f5f5f5;
+    background: $color-bg-light;
     overflow: hidden;
   }
 
@@ -145,75 +148,44 @@ const handleImageError = (e: Event) => {
     transition: transform 0.3s ease;
   }
 
-  &:hover &__image {
-    transform: scale(1.05);
-  }
+  &:hover &__image { transform: scale(1.05); }
 
   &__content {
-    padding: 16px;
+    padding: $gap-md;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: $gap-sm;
     flex: 1;
   }
 
   &__title {
-    font-size: 16px;
+    font-size: $font-lg;
     font-weight: 600;
-    color: #2c3e50;
+    color: $color-dark;
     margin: 0;
     line-height: 1.4;
   }
 
   &__count {
-    font-size: 14px;
-    color: #42b983;
+    font-size: $font-md;
+    color: $color-success-light;
     font-weight: 500;
   }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
-  border-radius: 6px;
+  @include skeleton;
+  border-radius: $radius-sm;
 
-  &--image {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border-radius: 0;
-  }
-
-  &--title {
-    height: 18px;
-    width: 75%;
-  }
-
-  &--count {
-    height: 16px;
-    width: 50%;
-  }
+  &--image { width: 100%; aspect-ratio: 16 / 9; border-radius: 0; }
+  &--title { height: 18px; width: 75%; }
+  &--count { height: 16px; width: 50%; }
 }
 
 .skeleton-content {
-  padding: 16px;
+  padding: $gap-md;
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-@keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-@media (max-width: 768px) {
-  .popular-categories {
-    margin: 0 4% 32px;
-    &__grid {
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-    }
-  }
 }
 </style>

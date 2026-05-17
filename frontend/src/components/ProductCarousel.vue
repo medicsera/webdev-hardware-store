@@ -166,45 +166,48 @@ const handleAddToCart = (product: Product, qty: number) => {
 
 <style lang="scss" scoped>
 .product-carousel {
-  margin: 0 8.5% 24px;
+  margin: 0 8.5% $gap-lg;
   position: relative;
+
+  @include below-md { margin: 0 $container-pad $gap-lg; }
+  @include below-sm { margin: 0 $gap-sm $gap-md; }
 
   &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: $gap-md;
     padding: 0 4px;
   }
 
   &__title {
-    font-size: 24px;
+    font-size: $font-3xl;
     font-weight: 700;
-    color: #2c3e50;
+    color: $color-dark;
     margin: 0;
+
+    @include below-sm { font-size: $font-xl; }
   }
 
   &__controls {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-top: 16px;
+    gap: $gap-sm;
+    margin-top: $gap-md;
   }
 
   &__container {
     display: flex;
-    gap: 16px;
+    gap: $gap-md;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    padding-bottom: 8px;
+    padding-bottom: $gap-sm;
 
     scrollbar-width: none;
     -ms-overflow-style: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    &::-webkit-scrollbar { display: none; }
 
     > * {
       flex-shrink: 0;
@@ -215,51 +218,40 @@ const handleAddToCart = (product: Product, qty: number) => {
   &__empty {
     width: 100%;
     text-align: center;
-    padding: 40px 20px;
-    color: #999;
-    font-size: 16px;
+    padding: $gap-xl $container-pad;
+    color: $color-text-muted;
+    font-size: $font-lg;
   }
 }
 
 .carousel-btn {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  border: 2px solid #e0e0e0;
-  background: white;
+  border-radius: $radius-full;
+  border: 2px solid $color-border;
+  background: #fff;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   transition: all 0.2s;
-  color: #2c3e50;
+  color: $color-dark;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   &:hover:not(:disabled) {
-    background: #f4b942;
-    border-color: #f4b942;
-    color: white;
+    background: $color-primary;
+    border-color: $color-primary;
+    color: #fff;
     transform: scale(1.05);
   }
 
-  &:active:not(:disabled) {
-    transform: scale(0.95);
-  }
+  &:active:not(:disabled) { transform: scale(0.95); }
 
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    border-color: #f0f0f0;
-
-    &:hover {
-      background: white;
-      transform: none;
-    }
+    border-color: $color-bg;
+    &:hover { background: #fff; transform: none; }
   }
 
-  svg {
-    width: 20px;
-    height: 20px;
-  }
+  svg { width: 20px; height: 20px; }
 }
 </style>

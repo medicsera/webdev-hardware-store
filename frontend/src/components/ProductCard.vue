@@ -165,8 +165,8 @@ const decrement = () => {
 .product-card {
   width: 242px;
   min-height: 401px;
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: $radius-lg;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
@@ -179,14 +179,11 @@ const decrement = () => {
   }
 
   &--loading {
-    opacity: 1;
     min-height: 380px;
     pointer-events: none;
   }
 
-  &--out-of-stock {
-    opacity: 0.7;
-  }
+  &--out-of-stock { opacity: 0.7; }
 }
 
 .product-image-link {
@@ -198,7 +195,7 @@ const decrement = () => {
 .product-image {
   position: relative;
   width: 100%;
-  background: #f5f5f5;
+  background: $color-bg-light;
   aspect-ratio: 1 / 1;
   overflow: hidden;
 
@@ -209,49 +206,43 @@ const decrement = () => {
     transition: transform 0.3s ease;
   }
 
-  &:hover &__img {
-    transform: scale(1.05);
-  }
+  &:hover &__img { transform: scale(1.05); }
 
   &__overlay {
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include flex-center;
 
     .out-of-stock {
-      color: white;
+      color: #fff;
       font-weight: 600;
-      font-size: 1.125rem;
+      font-size: $font-lg;
       text-align: center;
-      padding: 1rem;
+      padding: $gap-md;
     }
   }
 }
 
 .product-info {
-  padding: 1rem;
+  padding: $gap-md;
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 0.75rem;
+  gap: 12px;
 
   &__title-link {
     text-decoration: none;
     color: inherit;
     display: block;
 
-    &:hover .product-info__title {
-      color: #f4b942;
-    }
+    &:hover .product-info__title { color: $color-primary; }
   }
 
   &__title {
-    font-size: 1.125rem;
+    font-size: $font-lg;
     font-weight: 600;
-    color: #2c3e50;
+    color: $color-dark;
     margin: 0;
     line-height: 1.3;
     display: -webkit-box;
@@ -263,91 +254,62 @@ const decrement = () => {
 
   &__price {
     margin-top: auto;
-    padding-top: 0.5rem;
+    padding-top: $gap-sm;
   }
 
   .price {
-    font-size: 1.25rem;
+    font-size: $font-xl;
     font-weight: 700;
-    color: #42b983;
+    color: $color-success-light;
   }
 
   &__actions {
     display: flex;
-    gap: 0.75rem;
-    margin-top: 0.75rem;
+    gap: 12px;
+    margin-top: 12px;
   }
 }
 
 .btn-add-to-cart {
   flex: 1;
-  padding: 0.75rem 1rem;
-  background: #f4b942;
-  color: #2c3e50;
+  padding: 12px $gap-md;
+  background: $color-primary;
+  color: $color-dark;
   border: none;
-  border-radius: 8px;
+  border-radius: $radius-md;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover:not(:disabled) {
-    background: #e0a830;
-    transform: translateY(-2px);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  &--adding {
-    background: #42b983;
-    color: white;
-  }
+  &:hover:not(:disabled) { background: $color-primary-dark; transform: translateY(-2px); }
+  &:active:not(:disabled) { transform: translateY(0); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+  &--adding { background: $color-success-light; color: #fff; }
 }
 
 .quantity-selector {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
-  padding: 0.5rem;
-  border-radius: 8px;
+  background: $color-bg-light;
+  padding: $gap-sm;
+  border-radius: $radius-md;
 }
 
 .quantity-btn {
   width: 20px;
   height: 32px;
   border: none;
-  background: white;
-  border-radius: 6px;
-  font-size: 1.1rem;
+  background: #fff;
+  border-radius: $radius-sm;
+  font-size: $font-md;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   transition: all 0.2s;
 
-  &:hover:not(:disabled) {
-    background: #42b983;
-    color: white;
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  &--minus {
-    color: #e74c3c;
-  }
-
-  &--plus {
-    color: #27ae60;
-  }
+  &:hover:not(:disabled) { background: $color-success-light; color: #fff; }
+  &:disabled { opacity: 0.3; cursor: not-allowed; }
+  &--minus { color: $color-danger; }
+  &--plus  { color: $color-success; }
 }
 
 .quantity-input {
@@ -358,49 +320,19 @@ const decrement = () => {
   background: transparent;
   outline: none;
   -moz-appearance: textfield;
-  font-size: 0.875rem;
-  color: #555;
+  font-size: $font-sm;
+  color: $color-text;
 
   &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
+  &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 }
 
 .skeleton {
-  background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-  );
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 4px;
+  @include skeleton;
+  border-radius: $radius-sm;
 
-  &--image {
-    width: 100%;
-    height: 100%;
-  }
-
-  &--title {
-    height: 24px;
-    width: 80%;
-  }
-
-  &--price {
-    height: 28px;
-    width: 50%;
-  }
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  &--image { width: 100%; height: 100%; border-radius: 0; }
+  &--title { height: 24px; width: 80%; }
+  &--price { height: 28px; width: 50%; }
 }
 </style>
