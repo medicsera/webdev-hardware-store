@@ -39,9 +39,25 @@ export const useCartStore = defineStore('cart', () => {
     )
 
     function initForUser(userId: string | null) {
+        const previousKey = currentKey
+        const guestItems = [...items.value]
+
         localStorage.setItem(currentKey, JSON.stringify(items.value))
         currentKey = `${CART_KEY_PREFIX}${userId ?? 'guest'}`
         items.value = loadFromStorage(currentKey)
+
+        const isLoginTransition = previousKey === `${CART_KEY_PREFIX}guest` && userId !== null
+        if (isLoginTransition && guestItems.length > 0) {
+            for (const guestItem of guestItems) {
+                const existing = items.value.find(i => i.id === guestItem.id)
+                if (existing) {
+                    existing.cartQuantity = Math.min(existing.cartQuantity + guestItem.cartQuantity, existing.stock)
+                } else {
+                    items.value.push({ ...guestItem })
+                }
+            }
+            localStorage.removeItem(`${CART_KEY_PREFIX}guest`)
+        }
     }
 
     function addToCart(product: Product, qty = 1) {
