@@ -196,13 +196,21 @@ const handleLogout = () => {
       </div>
       <div class="contacts">
         <div class="contacts-div">
-          <span class="contacts-telephone">8-923-599-74-89</span>
+          <a href="tel:+79235997489" class="contacts-telephone">8-923-599-74-89</a>
         </div>
         <div class="contacts-icons">
-          <img src="@/assets/telephone-icon.svg" alt=""/>
-          <img src="@/assets/mail-icon.svg" alt=""/>
-          <img src="@/assets/vk-icon.svg" alt=""/>
-          <img src="@/assets/telegram-icon.svg" alt=""/>
+          <a href="tel:+79235997489" title="Позвонить">
+            <img src="@/assets/telephone-icon.svg" alt="Телефон"/>
+          </a>
+          <a href="mailto:info@factura.ru" title="Написать на почту">
+            <img src="@/assets/mail-icon.svg" alt="Email"/>
+          </a>
+          <a href="https://vk.com/facturasayan" target="_blank" rel="noopener" title="ВКонтакте">
+            <img src="@/assets/vk-icon.svg" alt="ВКонтакте"/>
+          </a>
+          <a href="https://t.me/sseraZzz" target="_blank" rel="noopener" title="Telegram">
+            <img src="@/assets/telegram-icon.svg" alt="Telegram"/>
+          </a>
         </div>
       </div>
       <div class="cart" @click="goToCart">
@@ -601,12 +609,31 @@ const handleLogout = () => {
   @include below-lg { display: none; }
 
   &-div { display: flex; justify-content: center; }
-  &-telephone { font-size: $default-size; }
+
+  &-telephone {
+    font-size: $default-size;
+    color: $color-dark;
+    text-decoration: none;
+    transition: color 0.2s;
+    &:hover { color: $color-primary; }
+  }
+
   &-icons {
     display: flex;
     justify-content: space-between;
     margin: 0 10%;
-    cursor: pointer;
+
+    a {
+      display: flex;
+      align-items: center;
+      opacity: 0.7;
+      transition: opacity 0.2s, transform 0.2s;
+
+      &:hover {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+    }
   }
 }
 
