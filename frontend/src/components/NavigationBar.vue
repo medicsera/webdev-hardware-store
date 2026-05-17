@@ -350,6 +350,7 @@ const handleLogout = () => {
   &--active { background-color: $color-primary-dark; }
 
   @include below-md { width: 48px; }
+  @include below-sm { width: 38px; height: 38px; border-radius: 8px; padding: 0; justify-content: center; }
 }
 
 .catalog-label {
@@ -481,6 +482,7 @@ const handleLogout = () => {
 
   @include below-lg { max-width: 480px; }
   @include below-md { max-width: none; }
+  @include below-sm { height: 36px; border-radius: 8px; }
 
   &-input {
     font-size: $default-size;

@@ -173,6 +173,11 @@ const decrement = () => {
   display: flex;
   flex-direction: column;
 
+  @include below-sm {
+    width: 148px;
+    min-height: unset;
+  }
+
   &:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
     transform: translateY(-4px);
@@ -181,6 +186,7 @@ const decrement = () => {
   &--loading {
     min-height: 380px;
     pointer-events: none;
+    @include below-sm { min-height: 220px; }
   }
 
   &--out-of-stock { opacity: 0.7; }
@@ -250,6 +256,8 @@ const decrement = () => {
     -webkit-box-orient: vertical;
     overflow: hidden;
     transition: color 0.2s;
+
+    @include below-sm { font-size: $font-base; }
   }
 
   &__price {
@@ -261,6 +269,8 @@ const decrement = () => {
     font-size: $font-xl;
     font-weight: 700;
     color: $color-success-light;
+
+    @include below-sm { font-size: $font-md; }
   }
 
   &__actions {
@@ -274,6 +284,8 @@ const decrement = () => {
   flex: 1;
   padding: 12px $gap-md;
   background: $color-primary;
+
+  @include below-sm { padding: 8px $gap-sm; font-size: $font-sm; }
   color: $color-dark;
   border: none;
   border-radius: $radius-md;

@@ -38,12 +38,6 @@
             <li>
               <a href="https://vk.com/facturasayan" target="_blank" rel="noopener">ВКонтакте</a>
             </li>
-            <li>
-              <a href="https://t.me/factura" target="_blank" rel="noopener">Телеграмм</a>
-            </li>
-            <li>
-              <a href="https://wa.me/79235997489" target="_blank" rel="noopener">WhatsApp</a>
-            </li>
           </ul>
         </div>
 
@@ -78,6 +72,8 @@ const currentYear = computed(() => new Date().getFullYear())
   padding: $gap-xl 0 $gap-md;
   margin-top: 60px;
   width: 100%;
+
+  @include below-sm { padding: $gap-lg 0 $gap-md; margin-top: 40px; }
 }
 
 .footer-container {
@@ -91,7 +87,8 @@ const currentYear = computed(() => new Date().getFullYear())
   margin-bottom: $gap-xl;
 
   @include below-lg { grid-template-columns: repeat(2, 1fr); gap: 30px; }
-  @include below-sm { grid-template-columns: 1fr; gap: 30px; }
+  @include below-sm { grid-template-columns: repeat(2, 1fr); gap: $gap-md; }
+  @include below-xs { grid-template-columns: repeat(2, 1fr); gap: $gap-sm; }
 }
 
 .footer-column {
@@ -100,6 +97,8 @@ const currentYear = computed(() => new Date().getFullYear())
     font-weight: 600;
     margin-bottom: $gap-md;
     color: #fff;
+
+    @include below-sm { font-size: $font-md; margin-bottom: $gap-sm; }
   }
 }
 
@@ -118,6 +117,8 @@ const currentYear = computed(() => new Date().getFullYear())
       font-size: $font-md;
       transition: color 0.2s;
       &:hover { color: $color-success-light; }
+
+      @include below-sm { font-size: $font-base; }
     }
   }
 }
@@ -128,6 +129,8 @@ const currentYear = computed(() => new Date().getFullYear())
     font-size: $font-md;
     color: #cccccc;
     line-height: 1.5;
+
+    @include below-sm { font-size: $font-base; }
   }
 }
 
