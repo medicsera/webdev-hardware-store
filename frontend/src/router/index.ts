@@ -76,6 +76,24 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/AdminDashboard.vue'),
         meta: { requiresAdmin: true },
     },
+    {
+        path: '/payment',
+        name: 'payment',
+        component: () => import('@/views/PaymentView.vue'),
+        meta: { title: "Способы оплаты" }
+    },
+    {
+        path: '/delivery',
+        name: 'delivery',
+        component: () => import('@/views/DeliveryView.vue'),
+        meta: { title: "Доставка" }
+    },
+    {
+        path: '/privacy',
+        name: 'privacy',
+        component: () => import('@/views/PrivacyView.vue'),
+        meta: { title: "Политика конфиденциальности" }
+    },
 ]
 
 const router = createRouter({
