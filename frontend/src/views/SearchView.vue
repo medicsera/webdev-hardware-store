@@ -109,69 +109,66 @@ const handleAddToCart = (product: Product, qty: number) => cartStore.addToCart(p
 
 <style lang="scss" scoped>
 .search-page {
-  background: #f0f0f0;
-  min-height: calc(100vh - 110px);
-  padding: 20px 0 40px;
+  @include page-layout;
 }
 
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.container { @include container; }
 
 .breadcrumbs {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 12px;
-  font-size: 13px;
+  font-size: $font-base;
 
-  &__link { display: flex; align-items: center; color: #999; text-decoration: none; &:hover { color: #f4b942; } }
-  &__separator { color: #ccc; font-size: 12px; }
-  &__item { color: #666; &--active { color: #2c3e50; font-weight: 600; } }
+  &__link { display: flex; align-items: center; color: $color-text-muted; text-decoration: none; &:hover { color: $color-primary; } }
+  &__separator { color: $color-border; font-size: $font-sm; }
+  &__item { color: $color-text-secondary; &--active { color: $color-dark; font-weight: 600; } }
 }
 
 .search-title {
-  font-size: 18px;
+  font-size: $font-xl;
   font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 8px;
-
-  &__query { color: #f4b942; }
+  color: $color-dark;
+  margin: 0 0 $gap-sm;
+  &__query { color: $color-primary; }
 }
 
-.search-count {
-  font-size: 13px;
-  color: #888;
-  margin: 0 0 20px;
-}
+.search-count { font-size: $font-base; color: $color-text-muted; margin: 0 0 20px; }
 
 .products-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: $gap-md;
+
+  @include below-lg { grid-template-columns: repeat(3, 1fr); }
+  @include below-md { grid-template-columns: repeat(2, 1fr); }
+  @include below-xs { grid-template-columns: 1fr; }
 }
 
 .search-empty {
   text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 8px;
+  padding: 60px $container-pad;
+  background: #fff;
+  border-radius: $radius-md;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: $gap-md;
 
-  &__text { font-size: 15px; color: #666; margin: 0; }
+  &__text { font-size: $small-size; color: $color-text-secondary; margin: 0; }
 }
 
 .btn-catalog {
   display: inline-block;
   padding: 10px 28px;
-  background: #f4b942;
-  color: #2c3e50;
-  border-radius: 6px;
-  font-size: 14px;
+  background: $color-primary;
+  color: $color-dark;
+  border-radius: $radius-md;
+  font-size: $font-md;
   font-weight: 600;
   text-decoration: none;
-  &:hover { background: #e0a830; }
+  &:hover { background: $color-primary-dark; }
 }
 
 .load-more-wrap {
@@ -182,19 +179,15 @@ const handleAddToCart = (product: Product, qty: number) => cartStore.addToCart(p
 
 .btn-load-more {
   padding: 10px 36px;
-  background: white;
-  border: 2px solid #f4b942;
-  border-radius: 6px;
-  font-size: 14px;
+  background: #fff;
+  border: 2px solid $color-primary;
+  border-radius: $radius-md;
+  font-size: $font-md;
   font-weight: 600;
-  color: #f4b942;
+  color: $color-primary;
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover:not(:disabled) { background: #f4b942; color: #2c3e50; }
+  &:hover:not(:disabled) { background: $color-primary; color: $color-dark; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
-
-@media (max-width: 1024px) { .products-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 768px)  { .products-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

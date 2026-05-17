@@ -177,163 +177,145 @@ const handleQuantityChange = (_id: number, _qty: number) => {}
 
 <style lang="scss" scoped>
 .catalog-page {
-  background: #f5f5f5;
-  min-height: calc(100vh - 110px);
-  padding: 20px 0 40px;
+  @include page-layout;
+  background: $color-bg-light;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
+.container { @include container; }
 
 .breadcrumbs {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 16px;
-  font-size: 13px;
+  margin-bottom: $gap-md;
+  font-size: $font-base;
 
-  &__link {
-    display: flex;
-    align-items: center;
-    color: #999;
-    text-decoration: none;
-    transition: color 0.2s;
-    &:hover { color: #f4b942; }
-  }
-
-  &__separator { color: #ccc; font-size: 12px; }
-
-  &__item {
-    color: #666;
-    &--active { color: #2c3e50; font-weight: 600; }
-  }
+  &__link { display: flex; align-items: center; color: $color-text-muted; text-decoration: none; transition: color 0.2s; &:hover { color: $color-primary; } }
+  &__separator { color: $color-border; font-size: $font-sm; }
+  &__item { color: $color-text-secondary; &--active { color: $color-dark; font-weight: 600; } }
 }
 
 .catalog-layout {
   display: flex;
   gap: 20px;
   align-items: flex-start;
+
+  @include below-md { flex-direction: column; }
 }
 
 .catalog-sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: $radius-md;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+
+  @include below-md { width: 100%; }
 }
 
 .filter-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 16px;
-  font-size: 14px;
+  gap: $gap-sm;
+  padding: 14px $gap-md;
+  font-size: $font-md;
   font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 1px solid #eee;
+  color: $color-dark;
+  border-bottom: 1px solid $color-border-light;
 }
 
 .filter-section {
-  padding: 14px 16px;
-  border-bottom: 1px solid #eee;
+  padding: 14px $gap-md;
+  border-bottom: 1px solid $color-border-light;
   &:last-child { border-bottom: none; }
-  &__title { font-size: 13px; font-weight: 600; color: #2c3e50; margin: 0 0 10px; }
+  &__title { font-size: $font-base; font-weight: 600; color: $color-dark; margin: 0 0 10px; }
 }
 
 .filter-subcat {
   display: block;
-  padding: 4px 0;
-  font-size: 13px;
-  color: #666;
+  padding: $gap-xs 0;
+  font-size: $font-base;
+  color: $color-text-secondary;
   text-decoration: none;
   transition: color 0.15s;
-  &:hover { color: #f4b942; }
-  &--active { color: #f4b942; font-weight: 600; }
+  &:hover { color: $color-primary; }
+  &--active { color: $color-primary; font-weight: 600; }
 }
 
 .price-range {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $gap-sm;
 
   &__field {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
-    color: #666;
+    font-size: $font-sm;
+    color: $color-text-secondary;
     label { flex-shrink: 0; width: 14px; }
   }
 
   &__input {
     flex: 1;
     height: 30px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 0 8px;
-    font-size: 12px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    padding: 0 $gap-sm;
+    font-size: $font-sm;
     outline: none;
     transition: border-color 0.2s;
-    &:focus { border-color: #f4b942; }
+    &:focus { border-color: $color-primary; }
   }
 
-  &__currency { font-size: 12px; color: #666; flex-shrink: 0; }
+  &__currency { font-size: $font-sm; color: $color-text-secondary; flex-shrink: 0; }
 }
 
 .catalog-content { flex: 1; min-width: 0; }
 
 .sort-bar {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding: 10px 16px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  gap: $gap-md;
+  margin-bottom: $gap-md;
+  padding: 10px $gap-md;
+  background: #fff;
+  border-radius: $radius-md;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  flex-wrap: wrap;
 }
 
 .sort-btn {
   background: none;
   border: none;
-  font-size: 13px;
-  color: #999;
+  font-size: $font-base;
+  color: $color-text-muted;
   cursor: pointer;
-  padding: 4px 0;
+  padding: $gap-xs 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: $gap-xs;
   transition: color 0.2s;
-  &:hover { color: #666; }
-  &--active { color: #f4b942; font-weight: 600; }
+  &:hover { color: $color-text-secondary; }
+  &--active { color: $color-primary; font-weight: 600; }
 }
 
 .products-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: $gap-md;
+
+  @include below-lg { grid-template-columns: repeat(3, 1fr); }
+  @include below-md { grid-template-columns: repeat(2, 1fr); }
+  @include below-xs { grid-template-columns: 1fr; }
 }
 
 .catalog-empty {
   text-align: center;
-  padding: 60px 20px;
-  color: #aaa;
-  font-size: 15px;
-  background: white;
-  border-radius: 8px;
-}
-
-@media (max-width: 1024px) {
-  .products-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (max-width: 768px) {
-  .catalog-layout { flex-direction: column; }
-  .catalog-sidebar { width: 100%; }
-  .products-grid { grid-template-columns: repeat(2, 1fr); }
+  padding: 60px $container-pad;
+  color: $color-text-faint;
+  font-size: $small-size;
+  background: #fff;
+  border-radius: $radius-md;
 }
 </style>
