@@ -114,6 +114,33 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    async function verifyEmail(email: string, code: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const resp = await api.post('/auth/verify', { email, code })
+            const token = resp.data.token
+            localStorage.setItem(TOKEN_KEY, token)
+            setUserFromToken(token)
+            if (currentUser.value?.id) {
+                useCartStore().initForUser(String(currentUser.value.id))
+            }
+            await fetchProfile()
+            return { success: true }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message ?? 'Ошибка подтверждения'
+            return { success: false, error: msg }
+        }
+    }
+
+    async function resendCode(email: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            await api.post('/auth/resend', { email })
+            return { success: true }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message ?? 'Ошибка отправки'
+            return { success: false, error: msg }
+        }
+    }
+
     function logout() {
         useCartStore().initForUser(null)
         currentUser.value = null
@@ -126,5 +153,5 @@ export const useAuthStore = defineStore('auth', () => {
         await fetchProfile()
     }
 
-    return { currentUser, isAuthenticated, login, register, logout, updateProfile }
+    return { currentUser, isAuthenticated, login, register, verifyEmail, resendCode, logout, updateProfile }
 })

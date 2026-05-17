@@ -66,6 +66,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Регистрация" }
     },
     {
+        path: '/verify',
+        name: 'verify',
+        component: () => import('@/views/VerifyView.vue'),
+        meta: { title: "Подтверждение email" }
+    },
+    {
         path: '/profile',
         name: 'profile',
         component: () => import('@/views/ProfileView.vue'),

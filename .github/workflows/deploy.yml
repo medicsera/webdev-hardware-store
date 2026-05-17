@@ -22,6 +22,11 @@ jobs:
           DB_PASS: ${{ secrets.DB_PASS }}
           DB_NAME: ${{ secrets.DB_NAME }}
           ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+          MAIL_HOST: ${{ secrets.MAIL_HOST }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USER: ${{ secrets.MAIL_USER }}
+          MAIL_PASS: ${{ secrets.MAIL_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
         run: |
           printf '%s\n' \
             "JWT_SECRET=$JWT_SECRET" \
@@ -31,6 +36,11 @@ jobs:
             "DB_PASS=$DB_PASS" \
             "DB_NAME=$DB_NAME" \
             "ALLOWED_ORIGINS=$ALLOWED_ORIGINS" \
+            "MAIL_HOST=$MAIL_HOST" \
+            "MAIL_PORT=$MAIL_PORT" \
+            "MAIL_USER=$MAIL_USER" \
+            "MAIL_PASS=$MAIL_PASS" \
+            "MAIL_FROM=$MAIL_FROM" \
             > .env
 
       - name: Deploy
