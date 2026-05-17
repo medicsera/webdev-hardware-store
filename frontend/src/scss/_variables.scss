@@ -1,22 +1,87 @@
-// Colors
-$black-color: #000000;
-$white-color: #FFFFFF;
-$light-grey-color:#D9D9D9;
-$grey-color: #8E8B8B;
-$light-orange-color: #FFCD62;
-$red-color: #FF0509;
-$green-light-color: #15FF00;
-$green-color: #0BD300;
-
+// ─── Legacy (kept for backward compat) ───────────────────────────
+$black-color:           #000000;
+$white-color:           #FFFFFF;
+$light-grey-color:      #D9D9D9;
+$grey-color:            #8E8B8B;
+$light-orange-color:    #FFCD62;
+$red-color:             #FF0509;
+$green-light-color:     #15FF00;
+$green-color:           #0BD300;
 $background-main-color: #EAEAEA;
 $background-card-color: #F3F3F3;
 
-// Font-size
-$default-size: 20px;
-$small-size: 15px;
+// ─── Brand ────────────────────────────────────────────────────────
+$color-primary:       #f4b942;
+$color-primary-dark:  #e0a830;
+$color-primary-light: #fdf8ee;
 
-// Breakpoints
-$breakpoint-sm: 640px;
-$breakpoint-md: 768px;
-$breakpoint-lg: 1024px;
-$breakpoint-xl: 1280px;
+// ─── Text ─────────────────────────────────────────────────────────
+$color-dark:           #2c3e50;
+$color-text:           #555555;
+$color-text-secondary: #666666;
+$color-text-muted:     #888888;
+$color-text-faint:     #aaaaaa;
+
+// ─── Status ───────────────────────────────────────────────────────
+$color-success:       #27ae60;
+$color-success-light: #42b983;
+$color-danger:        #e74c3c;
+$color-danger-bg:     #fdecea;
+
+// ─── Backgrounds & Borders ────────────────────────────────────────
+$color-bg:           #f0f0f0;
+$color-bg-light:     #f5f5f5;
+$color-bg-dark:      #3a3a3a;
+$color-border:       #dddddd;
+$color-border-light: #eeeeee;
+
+// ─── Layout ───────────────────────────────────────────────────────
+$container-max: 1200px;
+$container-pad: 20px;
+$nav-height:    110px;
+
+// ─── Spacing ──────────────────────────────────────────────────────
+$gap-xs: 4px;
+$gap-sm: 8px;
+$gap-md: 16px;
+$gap-lg: 24px;
+$gap-xl: 40px;
+
+// ─── Border radius ────────────────────────────────────────────────
+$radius-sm:   4px;
+$radius-md:   8px;
+$radius-lg:   12px;
+$radius-pill: 20px;
+$radius-full: 50%;
+
+// ─── Font sizes ───────────────────────────────────────────────────
+$default-size: 20px;
+$small-size:   15px;
+$font-xs:   11px;
+$font-sm:   12px;
+$font-base: 13px;
+$font-md:   14px;
+$font-lg:   16px;
+$font-xl:   18px;
+$font-2xl:  22px;
+$font-3xl:  24px;
+
+// ─── Breakpoints (min-width, mobile-first) ────────────────────────
+$bp-xs: 480px;
+$bp-sm: 640px;
+$bp-md: 768px;
+$bp-lg: 1024px;
+$bp-xl: 1280px;
+
+// ─── Breakpoints (max-width, desktop-first) ───────────────────────
+$bp-xs-max: 479px;
+$bp-sm-max: 639px;
+$bp-md-max: 767px;
+$bp-lg-max: 1023px;
+$bp-xl-max: 1279px;
+
+// Legacy aliases
+$breakpoint-sm: $bp-sm;
+$breakpoint-md: $bp-md;
+$breakpoint-lg: $bp-lg;
+$breakpoint-xl: $bp-xl;

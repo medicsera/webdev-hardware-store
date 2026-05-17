@@ -1,2 +1,12 @@
 @use "@/scss/variables" as *;
 @use "@/scss/mixins" as *;
+
+// Global keyframes used across components
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
