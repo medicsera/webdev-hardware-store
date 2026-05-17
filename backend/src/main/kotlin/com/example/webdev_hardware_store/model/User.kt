@@ -20,5 +20,6 @@ data class User(
     var firstName: String? = null,
     var lastName: String? = null,
     var address: String? = null,
-    var phone: String? = null
+    var phone: String? = null,
+    var verified: Boolean = true
 )
