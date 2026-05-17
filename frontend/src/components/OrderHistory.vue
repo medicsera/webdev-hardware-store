@@ -191,39 +191,39 @@ onUnmounted(() => {
 
   &__loading {
     display: flex;
-    gap: 16px;
+    gap: $gap-md;
     flex-wrap: wrap;
   }
 
   &__empty {
     text-align: center;
-    padding: 40px;
-    color: #999;
+    padding: $gap-xl;
+    color: $color-text-muted;
 
-    p { margin: 0 0 16px; font-size: 15px; }
+    p { margin: 0 0 $gap-md; font-size: $font-md; }
   }
 
   &__link {
     display: inline-block;
     padding: 10px 28px;
-    background: #f4b942;
-    color: #2c3e50;
-    border-radius: 6px;
-    font-size: 14px;
+    background: $color-primary;
+    color: $color-dark;
+    border-radius: $radius-md;
+    font-size: $font-md;
     font-weight: 600;
     text-decoration: none;
     transition: background 0.2s;
-    &:hover { background: #e0a830; }
+    &:hover { background: $color-primary-dark; }
   }
 
   &__carousel {
     display: flex;
-    gap: 16px;
+    gap: $gap-md;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    padding-bottom: 8px;
+    padding-bottom: $gap-sm;
     scrollbar-width: none;
     -ms-overflow-style: none;
     &::-webkit-scrollbar { display: none; }
@@ -233,17 +233,17 @@ onUnmounted(() => {
   &__controls {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-top: 16px;
+    gap: $gap-sm;
+    margin-top: $gap-md;
   }
 }
 
 .order-card {
   flex-shrink: 0;
   width: 180px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: #fff;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
   overflow: hidden;
   transition: box-shadow 0.2s;
 
@@ -253,12 +253,10 @@ onUnmounted(() => {
     pointer-events: none;
 
     .skeleton {
-      background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
-      background-size: 200% 100%;
-      animation: skeleton-loading 1.5s infinite;
-      border-radius: 4px;
+      @include skeleton;
+      border-radius: $radius-sm;
 
-      &--image { width: 100%; height: 120px; }
+      &--image { width: 100%; height: 120px; border-radius: 0; }
       &--title { height: 14px; width: 80%; margin: 12px; }
       &--price { height: 16px; width: 50%; margin: 0 12px 12px; }
     }
@@ -270,12 +268,7 @@ onUnmounted(() => {
     background: #d5d5d5;
     overflow: hidden;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
   }
 
   &__image-placeholder {
@@ -292,9 +285,9 @@ onUnmounted(() => {
   }
 
   &__name {
-    font-size: 12px;
+    font-size: $font-sm;
     font-weight: 600;
-    color: #2c3e50;
+    color: $color-dark;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -302,51 +295,39 @@ onUnmounted(() => {
     overflow: hidden;
   }
 
-  &__more {
-    font-size: 11px;
-    color: #999;
-    margin: 0;
-  }
+  &__more { font-size: $font-xs; color: $color-text-muted; margin: 0; }
 
   &__price {
-    font-size: 13px;
+    font-size: $font-base;
     font-weight: 700;
     color: #333;
     margin: 2px 0 0;
   }
 
   &__date,
-  &__time {
-    font-size: 11px;
-    color: #666;
-    margin: 0;
-  }
+  &__time { font-size: $font-xs; color: $color-text-secondary; margin: 0; }
 
   &__details {
     margin-top: 6px;
     width: 100%;
     padding: 5px 0;
     background: none;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 11px;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    font-size: $font-xs;
     font-weight: 600;
-    color: #555;
+    color: $color-text;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
 
-    &:hover {
-      background: #f4b942;
-      border-color: #f4b942;
-      color: white;
-    }
+    &:hover { background: $color-primary; border-color: $color-primary; color: #fff; }
   }
 
   &__status {
     display: inline-block;
     margin-top: 4px;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: $radius-sm;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -361,29 +342,22 @@ onUnmounted(() => {
   }
 }
 
-@keyframes skeleton-loading {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
 .carousel-btn {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  border: 2px solid #e0e0e0;
-  background: white;
+  border-radius: $radius-full;
+  border: 2px solid $color-border;
+  background: #fff;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   transition: all 0.2s;
-  color: #2c3e50;
+  color: $color-dark;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   &:hover:not(:disabled) {
-    background: #f4b942;
-    border-color: #f4b942;
-    color: white;
+    background: $color-primary;
+    border-color: $color-primary;
+    color: #fff;
     transform: scale(1.05);
   }
 
@@ -392,8 +366,8 @@ onUnmounted(() => {
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-    border-color: #f0f0f0;
-    &:hover { background: white; transform: none; }
+    border-color: $color-bg;
+    &:hover { background: #fff; transform: none; }
   }
 
   svg { width: 20px; height: 20px; }

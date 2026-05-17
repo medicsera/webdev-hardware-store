@@ -107,16 +107,14 @@ async function cancelOrder() {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   z-index: 200;
-  padding: 16px;
+  padding: $gap-md;
 }
 
 .modal {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: $radius-lg;
   padding: 28px 28px 24px;
   width: 100%;
   max-width: 480px;
@@ -125,14 +123,16 @@ async function cancelOrder() {
   position: relative;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 
+  @include below-xs { padding: $gap-md; }
+
   &__close {
     position: absolute;
     top: 14px;
     right: 16px;
     background: none;
     border: none;
-    font-size: 18px;
-    color: #aaa;
+    font-size: $font-xl;
+    color: $color-text-faint;
     cursor: pointer;
     line-height: 1;
     padding: 4px;
@@ -141,9 +141,9 @@ async function cancelOrder() {
   }
 
   &__title {
-    font-size: 18px;
+    font-size: $font-xl;
     font-weight: 700;
-    color: #2c3e50;
+    color: $color-dark;
     margin: 0 0 12px;
   }
 
@@ -151,19 +151,17 @@ async function cancelOrder() {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: $gap-md;
+    flex-wrap: wrap;
   }
 
-  &__date {
-    font-size: 13px;
-    color: #888;
-  }
+  &__date { font-size: $font-base; color: $color-text-muted; }
 
   &__status {
     display: inline-block;
     padding: 3px 10px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: $font-sm;
     font-weight: 600;
     text-transform: uppercase;
 
@@ -178,7 +176,7 @@ async function cancelOrder() {
 
   &__items {
     list-style: none;
-    margin: 0 0 20px;
+    margin: 0 0 $gap-md;
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -190,38 +188,26 @@ async function cancelOrder() {
     flex-direction: column;
     gap: 4px;
     padding: 12px 0;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 16px;
+    border-top: 1px solid $color-border-light;
+    border-bottom: 1px solid $color-border-light;
+    margin-bottom: $gap-md;
   }
 
-  &__delivery-method {
-    font-size: 14px;
-    font-weight: 600;
-    color: #2c3e50;
-  }
-
-  &__delivery-address {
-    font-size: 13px;
-    color: #555;
-  }
-
-  &__delivery-cost {
-    font-size: 13px;
-    color: #888;
-  }
+  &__delivery-method { font-size: $font-md; font-weight: 600; color: $color-dark; }
+  &__delivery-address { font-size: $font-base; color: $color-text; }
+  &__delivery-cost { font-size: $font-base; color: $color-text-muted; }
 
   &__total {
-    font-size: 17px;
+    font-size: $font-lg;
     font-weight: 700;
-    color: #2c3e50;
+    color: $color-dark;
     text-align: right;
-    margin-bottom: 20px;
+    margin-bottom: $gap-md;
   }
 
   &__error {
-    font-size: 13px;
-    color: #e74c3c;
+    font-size: $font-base;
+    color: $color-danger;
     margin: 0 0 12px;
     text-align: center;
   }
@@ -230,6 +216,7 @@ async function cancelOrder() {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    flex-wrap: wrap;
   }
 }
 
@@ -242,33 +229,26 @@ async function cancelOrder() {
     width: 52px;
     height: 52px;
     object-fit: cover;
-    border-radius: 6px;
-    border: 1px solid #eee;
+    border-radius: $radius-md;
+    border: 1px solid $color-border-light;
     flex-shrink: 0;
-
-    &--empty {
-      background: #e0e0e0;
-    }
+    &--empty { background: $color-border; }
   }
 
   &__name {
     flex: 1;
-    font-size: 13px;
-    color: #2c3e50;
+    font-size: $font-base;
+    color: $color-dark;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  &__qty {
-    font-size: 12px;
-    color: #888;
-    flex-shrink: 0;
-  }
+  &__qty { font-size: $font-sm; color: $color-text-muted; flex-shrink: 0; }
 
   &__price {
-    font-size: 13px;
+    font-size: $font-base;
     font-weight: 600;
     color: #333;
     flex-shrink: 0;
@@ -282,10 +262,10 @@ async function cancelOrder() {
   align-items: center;
   gap: 6px;
   height: 36px;
-  padding: 0 20px;
+  padding: 0 $gap-md;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: $radius-md;
+  font-size: $font-md;
   font-weight: 600;
   cursor: pointer;
   transition: filter 0.15s;
@@ -293,21 +273,19 @@ async function cancelOrder() {
   &:disabled { opacity: 0.5; cursor: not-allowed; }
   &:not(:disabled):hover { filter: brightness(0.9); }
 
-  &--cancel { background: #e74c3c; color: white; }
-  &--close  { background: #f0f0f0; color: #555; }
+  &--cancel { background: $color-danger; color: #fff; }
+  &--close  { background: $color-bg; color: $color-text; }
 }
 
 .btn-spinner {
   width: 14px;
   height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: white;
-  border-radius: 50%;
+  border-top-color: #fff;
+  border-radius: $radius-full;
   animation: spin 0.55s linear infinite;
   flex-shrink: 0;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>

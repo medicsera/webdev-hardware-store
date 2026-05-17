@@ -220,20 +220,27 @@ const startEditPassword = () => {
   flex-direction: column;
   gap: 14px;
   max-width: 500px;
+
+  @include below-sm { max-width: 100%; }
 }
 
 .form-group {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+
+  @include below-xs { flex-direction: column; align-items: flex-start; }
 
   &__label {
     width: 130px;
     flex-shrink: 0;
-    font-size: 13px;
+    font-size: $font-base;
     color: #333;
     font-weight: 500;
     text-align: right;
+
+    @include below-xs { width: auto; text-align: left; }
   }
 
   &__input {
@@ -242,81 +249,72 @@ const startEditPassword = () => {
     height: 28px;
     padding: 0 10px;
     border: 1px solid #ccc;
-    border-radius: 3px;
-    font-size: 13px;
+    border-radius: $radius-sm;
+    font-size: $font-base;
     background: #fff;
     transition: border-color 0.2s;
 
-    &:focus {
-      outline: none;
-      border-color: #f4b942;
-    }
+    @include below-xs { max-width: 100%; width: 100%; }
 
-    &:disabled {
-      background: #f0f0f0;
-      color: #666;
-      cursor: default;
-    }
+    &:focus { outline: none; border-color: $color-primary; }
+    &:disabled { background: $color-bg; color: $color-text-secondary; cursor: default; }
   }
 }
 
 .change-btn {
   padding: 4px 14px;
   background: none;
-  border: 1px solid #f4b942;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #f4b942;
+  border: 1px solid $color-primary;
+  border-radius: $radius-sm;
+  font-size: $font-sm;
+  color: $color-primary;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
 
-  &:hover {
-    background: #f4b942;
-    color: #fff;
-  }
+  &:hover { background: $color-primary; color: #fff; }
 }
 
 .form-error {
   margin-left: 146px;
-  background: #fdecea;
-  border: 1px solid #e74c3c;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #e74c3c;
+  background: $color-danger-bg;
+  border: 1px solid $color-danger;
+  border-radius: $radius-sm;
+  padding: $gap-sm 12px;
+  font-size: $font-base;
+  color: $color-danger;
+
+  @include below-xs { margin-left: 0; }
 }
 
 .form-success {
   margin-left: 146px;
   background: #e8f5e9;
-  border: 1px solid #27ae60;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #27ae60;
+  border: 1px solid $color-success;
+  border-radius: $radius-sm;
+  padding: $gap-sm 12px;
+  font-size: $font-base;
+  color: $color-success;
+
+  @include below-xs { margin-left: 0; }
 }
 
 .form-submit {
-  padding: 8px 28px;
-  background: #f4b942;
-  color: #2c3e50;
+  padding: $gap-sm 28px;
+  background: $color-primary;
+  color: $color-dark;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: $radius-pill;
+  font-size: $font-md;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   align-self: flex-start;
   margin-left: 146px;
 
-  &:hover:not(:disabled) {
-    background: #e0a830;
-  }
+  @include below-xs { margin-left: 0; align-self: stretch; }
 
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
+  &:hover:not(:disabled) { background: $color-primary-dark; }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
 }
 </style>
