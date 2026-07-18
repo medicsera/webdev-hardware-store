@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PersonalDataForm from '@/components/PersonalDataForm.vue'
 import OrderHistory from '@/components/OrderHistory.vue'
@@ -7,10 +8,17 @@ import AdminDashboard from '@/views/AdminDashboard.vue'
 
 type Tab = 'personal' | 'orders'
 
+const route = useRoute()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.currentUser?.role === 'ADMIN')
 
-const activeTab = ref<Tab>('personal')
+const activeTab = ref<Tab>((route.query.tab as Tab) === 'orders' ? 'orders' : 'personal')
+
+onMounted(() => {
+  if (route.query.tab === 'orders') {
+    activeTab.value = 'orders'
+  }
+})
 </script>
 
 <template>

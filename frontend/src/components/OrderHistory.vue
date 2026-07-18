@@ -123,29 +123,33 @@ onUnmounted(() => {
 
     <!-- Orders carousel -->
     <template v-else>
-      <div ref="carouselRef" class="order-history__carousel">
-        <div v-for="order in orders" :key="order.id" class="order-card">
-          <div class="order-card__image">
-            <img
-              v-if="order.items[0]?.imageUrl"
-              :src="order.items[0].imageUrl"
-              :alt="order.items[0].name"
-            />
-            <div v-else class="order-card__image-placeholder"></div>
-          </div>
+      <div class="order-history__clip">
+        <div ref="carouselRef" class="order-history__carousel">
+          <div v-for="order in orders" :key="order.id" class="order-card">
+            <div class="order-card__image">
+              <img
+                v-if="order.items[0]?.imageUrl"
+                :src="order.items[0].imageUrl"
+                :alt="order.items[0].name"
+              />
+              <div v-else class="order-card__image-placeholder"></div>
+            </div>
 
-          <div class="order-card__info">
-            <h4 class="order-card__name">{{ order.items[0]?.name }}</h4>
-            <p v-if="order.items.length > 1" class="order-card__more">
-              + ещё {{ order.items.length - 1 }} {{ order.items.length - 1 === 1 ? 'товар' : 'товара' }}
-            </p>
-            <p class="order-card__price">{{ formatPrice(order.total) }}</p>
-            <p class="order-card__date">{{ formatDate(order.createdAt) }}</p>
-            <p class="order-card__time">{{ formatTime(order.createdAt) }}</p>
-            <span class="order-card__status" :class="`order-card__status--${order.status}`">
-              {{ statusLabel[order.status] ?? order.status }}
-            </span>
-            <button class="order-card__details" @click="openOrder(order)">Подробнее</button>
+            <div class="order-card__info">
+              <h4 class="order-card__name">{{ order.items[0]?.name }}</h4>
+              <p v-if="order.items.length > 1" class="order-card__more">
+                + ещё {{ order.items.length - 1 }} {{ order.items.length - 1 === 1 ? 'товар' : 'товара' }}
+              </p>
+              <p class="order-card__price">{{ formatPrice(order.total) }}</p>
+              <p class="order-card__date">{{ formatDate(order.createdAt) }}</p>
+              <p class="order-card__time">{{ formatTime(order.createdAt) }}</p>
+              <div class="order-card__footer">
+                <span class="order-card__status" :class="`order-card__status--${order.status}`">
+                  {{ statusLabel[order.status] ?? order.status }}
+                </span>
+                <button class="order-card__details" @click="openOrder(order)">Подробнее</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -216,12 +220,16 @@ onUnmounted(() => {
     &:hover { background: $color-primary-dark; }
   }
 
+  &__clip {
+    overflow: hidden;
+    width: 100%;
+  }
+
   &__carousel {
     display: flex;
     gap: $gap-md;
     overflow-x: auto;
     overflow-y: hidden;
-    scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
     padding-bottom: $gap-sm;
     scrollbar-width: none;
@@ -246,6 +254,8 @@ onUnmounted(() => {
   border-radius: $radius-md;
   overflow: hidden;
   transition: box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
 
   &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
 
@@ -282,6 +292,7 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    flex: 1;
   }
 
   &__name {
@@ -307,8 +318,14 @@ onUnmounted(() => {
   &__date,
   &__time { font-size: $font-xs; color: $color-text-secondary; margin: 0; }
 
+  &__footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
   &__details {
-    margin-top: 6px;
     width: 100%;
     padding: 5px 0;
     background: none;
@@ -325,7 +342,6 @@ onUnmounted(() => {
 
   &__status {
     display: inline-block;
-    margin-top: 4px;
     padding: 2px 6px;
     border-radius: $radius-sm;
     font-size: 10px;

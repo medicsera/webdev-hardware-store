@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCartStore, type CartItem } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/auth'
 
-const router = useRouter()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
 
-const loading      = ref(true)
+const loading = ref(true)
 const isSubmitting = ref(false)
+const orderSuccess = ref(false)
 
 const deliveryCost          = 350
 const freeDeliveryThreshold = 5000
@@ -86,7 +85,8 @@ const handleCheckout = async () => {
       deliveryCost: delivery.value
     })
     cartStore.clearCart()
-    router.push('/profile')
+    orderSuccess.value = true
+    isSubmitting.value = false
   } catch (err) {
     console.error('Checkout failed', err)
     isSubmitting.value = false
@@ -98,6 +98,20 @@ onMounted(() => { loading.value = false })
 
 <template>
   <main class="cart-page">
+    <!-- Success notification -->
+    <transition name="notif">
+      <div v-if="orderSuccess" class="order-success-banner">
+        <button class="order-success-banner__close" @click="orderSuccess = false">✕</button>
+        <div class="order-success-banner__body">
+          <svg class="order-success-banner__icon" width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <circle cx="11" cy="11" r="10" stroke="#2ecc40" stroke-width="2"/>
+            <path d="M7 11l3 3 5-6" stroke="#2ecc40" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="order-success-banner__text">Заказ успешно оформлен!</span>
+          <router-link to="/profile?tab=orders" class="order-success-banner__link">Перейти к истории покупок</router-link>
+        </div>
+      </div>
+    </transition>
     <div class="container">
       <div class="breadcrumbs">
         <router-link to="/" class="breadcrumbs__link">
@@ -278,6 +292,85 @@ onMounted(() => { loading.value = false })
 <style lang="scss" scoped>
 .cart-page {
   @include page-layout;
+  position: relative;
+}
+
+.order-success-banner {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: 320px;
+  background: #e8f5e9;
+  border: 1px solid #2ecc40;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 16px 36px 16px 16px;
+
+  &__close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: $font-sm;
+    color: #1a6e29;
+    cursor: pointer;
+    padding: 2px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    line-height: 1;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+  }
+
+  &__text {
+    font-size: $font-base;
+    font-weight: 600;
+    color: #1a6e29;
+  }
+
+  &__link {
+    color: $color-primary-dark;
+    text-decoration: underline;
+    font-weight: 600;
+    font-size: $font-base;
+    white-space: nowrap;
+
+    &:hover {
+      color: $color-dark;
+    }
+  }
+}
+
+.notif-enter-active,
+.notif-leave-active {
+  transition: all 0.3s ease;
+}
+
+.notif-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.notif-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px);
 }
 
 .container { @include container; }
