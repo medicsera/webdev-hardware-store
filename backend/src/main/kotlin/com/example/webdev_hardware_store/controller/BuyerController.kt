@@ -73,14 +73,14 @@ class BuyerController(
 
     @GetMapping("/profile")
     fun getProfile(@AuthenticationPrincipal principal: CustomUserDetails): UserProfileDto =
-        userRepository.findById(principal.id).orElseThrow().toProfileDto()
+        userRepository.findById(principal.id).orElseThrow { NoSuchElementException() }.toProfileDto()
 
     @PutMapping("/profile")
     fun updateProfile(
         @AuthenticationPrincipal principal: CustomUserDetails,
         @RequestBody data: UpdateBuyerDto
     ): UserProfileDto {
-        val user = userRepository.findById(principal.id).orElseThrow()
+        val user = userRepository.findById(principal.id).orElseThrow { NoSuchElementException() }
         val newPassword: String = if (!data.password.isNullOrBlank())
             passwordEncoder.encode(data.password!!) ?: ""
         else
@@ -104,7 +104,7 @@ class BuyerController(
         @AuthenticationPrincipal principal: CustomUserDetails,
         @Valid @RequestBody dto: CreateOrderDto
     ): OrderResponse {
-        val user = userRepository.findById(principal.id).orElseThrow()
+        val user = userRepository.findById(principal.id).orElseThrow { NoSuchElementException() }
 
         // Блокируем строки товаров (SELECT FOR UPDATE) и проверяем остаток.
         // Сортировка по id исключает взаимную блокировку между параллельными транзакциями.
