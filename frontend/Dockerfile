@@ -1,11 +1,11 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install && chmod -R +x node_modules/.bin/
 
 COPY . .
-RUN npm run build
+RUN node node_modules/vite/bin/vite.js build
 
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html

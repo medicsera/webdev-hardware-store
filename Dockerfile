@@ -4,6 +4,7 @@ WORKDIR /app
 # Copy Maven wrapper and pom files
 COPY mvnw .
 COPY .mvn .mvn
+RUN chmod +x mvnw
 COPY pom.xml .
 COPY backend/pom.xml backend/pom.xml
 COPY frontend/pom.xml frontend/pom.xml
