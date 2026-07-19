@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     init()
 
-    async function login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    async function login(email: string, password: string): Promise<{ success: boolean; error?: string; needsVerification?: boolean }> {
         try {
             const resp = await api.post('/auth/login', { username: email, password })
             const token = resp.data.token
@@ -86,6 +86,9 @@ export const useAuthStore = defineStore('auth', () => {
             await fetchProfile()
             return { success: true }
         } catch (err: any) {
+            if (err?.response?.status === 403) {
+                return { success: false, error: err.response.data.message, needsVerification: true }
+            }
             const msg = err?.response?.data?.message ?? 'Ошибка входа'
             return { success: false, error: msg }
         }

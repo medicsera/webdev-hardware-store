@@ -34,6 +34,8 @@ const handleSubmit = async () => {
   if (result.success) {
     const redirect = route.query.redirect
     router.push(typeof redirect === 'string' ? redirect : '/')
+  } else if (result.needsVerification) {
+    router.push(`/verify?email=${encodeURIComponent(email.value.trim())}`)
   } else if (result.error) {
     error.value = result.error
   }

@@ -79,6 +79,11 @@ class AuthController(
             authManager.authenticate(UsernamePasswordAuthenticationToken(req.username, req.password))
             rateLimiter.clear(ip)
             val user = userRepository.findByUsername(req.username)!!
+            if (!user.verified) {
+                sendCode(user.username)
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse("Email не подтверждён. Код отправлен повторно."))
+            }
             val token = jwtUtil.generateToken(user.id, user.username, user.role)
             ResponseEntity.ok(AuthResponse(token))
         } catch (e: AuthenticationException) {
