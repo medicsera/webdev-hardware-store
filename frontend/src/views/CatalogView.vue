@@ -79,7 +79,8 @@ const handleQuantityChange = (_id: number, _qty: number) => {}
           </svg>
         </router-link>
         <span class="breadcrumbs__separator">/</span>
-        <span class="breadcrumbs__item">{{ breadcrumbCategory }}</span>
+        <router-link v-if="subcategorySlug" :to="`/catalog/${categorySlug}`" class="breadcrumbs__link">{{ breadcrumbCategory }}</router-link>
+        <span v-else class="breadcrumbs__item breadcrumbs__item--active">{{ breadcrumbCategory }}</span>
         <template v-if="breadcrumbSubcategory">
           <span class="breadcrumbs__separator">/</span>
           <span class="breadcrumbs__item breadcrumbs__item--active">{{ breadcrumbSubcategory }}</span>

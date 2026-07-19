@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
+import { useCategories } from '@/composables/useCategories'
 import { productService } from '@/services/productApi'
 import type { Product } from '@/types/product'
 import AdminProductModal from '@/components/AdminProductModal.vue'
@@ -10,6 +11,7 @@ import AdminProductModal from '@/components/AdminProductModal.vue'
 const route     = useRoute()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
+const { allCategories, fetchAllCategories } = useCategories()
 
 const isAdmin        = computed(() => authStore.currentUser?.role === 'ADMIN')
 const showEditModal  = ref(false)
@@ -46,8 +48,18 @@ const fetchProduct = async () => {
   }
 }
 
-watch(() => route.params.id, fetchProduct)
-onMounted(fetchProduct)
+const breadcrumbCatalog = computed(() => {
+  if (!product.value?.catalogId) return null
+  return allCategories.value.find(c => c.id === product.value!.catalogId)
+})
+
+const breadcrumbSubcatalog = computed(() => {
+  if (!product.value?.subCatalogId || !breadcrumbCatalog.value) return null
+  return breadcrumbCatalog.value?.subcategories?.find(s => s.id === product.value!.subCatalogId)
+})
+
+watch(() => route.params.id, () => { fetchProduct() })
+onMounted(() => { fetchAllCategories(); fetchProduct() })
 
 const imageCount = computed(() => product.value?.imageUrls.length ?? 0)
 
@@ -84,6 +96,14 @@ const handleAddToCart = () => {
             <path d="M1 6L7 1L13 6V12C13 12.55 12.55 13 12 13H9V9H5V13H2C1.45 13 1 12.55 1 12V6Z" stroke="#999" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </router-link>
+        <template v-if="breadcrumbCatalog">
+          <span class="breadcrumbs__separator">/</span>
+          <router-link :to="`/catalog/${breadcrumbCatalog.slug}`" class="breadcrumbs__link">{{ breadcrumbCatalog.name }}</router-link>
+        </template>
+        <template v-if="breadcrumbSubcatalog">
+          <span class="breadcrumbs__separator">/</span>
+          <router-link :to="`/catalog/${breadcrumbCatalog!.slug}/${breadcrumbSubcatalog.slug}`" class="breadcrumbs__link">{{ breadcrumbSubcatalog.name }}</router-link>
+        </template>
         <span class="breadcrumbs__separator">/</span>
         <span class="breadcrumbs__item breadcrumbs__item--active">{{ product?.name ?? 'Товар' }}</span>
       </div>
