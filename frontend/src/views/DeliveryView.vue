@@ -17,7 +17,8 @@
           <div class="info-card__badge info-card__badge--free">Бесплатно</div>
         </div>
 
-        <div class="info-card">
+        <div class="info-card info-card--disabled">
+          <div class="info-card__badge-disabled">Скоро станет доступно</div>
           <div class="info-card__icon">🏠</div>
           <h2 class="info-card__title">Доставка по городу</h2>
           <p class="info-card__text">
@@ -45,9 +46,7 @@
       <div class="info-page__section">
         <h2 class="info-page__section-title">Условия доставки</h2>
         <ul class="info-page__list">
-          <li>Заказы, оформленные до 16:00, передаются в доставку в тот же день.</li>
           <li>Перед доставкой менеджер свяжется с вами для подтверждения времени.</li>
-          <li>Крупногабаритный товар (более 30 кг) доставляется только при наличии грузчика.</li>
           <li>При получении обязательно проверьте целостность товара.</li>
         </ul>
       </div>
@@ -57,7 +56,7 @@
         <div class="map-placeholder">
           <p>📍 Ленинградский микрорайон, 26/1н, Саяногорск, Республика Хакасия</p>
           <a
-            href="https://yandex.ru/maps/?text=Саяногорск+Ленинградский+микрорайон+26%2F1"
+            href="https://yandex.ru/maps/-/CTVq4Dnp"
             target="_blank"
             rel="noopener"
             class="map-link"
@@ -126,8 +125,28 @@
   padding: $gap-lg;
   position: relative;
   transition: box-shadow 0.2s;
+  overflow: hidden;
 
   &:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
+
+  &--disabled {
+    opacity: 0.55;
+    &:hover { box-shadow: none; }
+  }
+
+  &__badge-disabled {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-muted;
+    background: $color-bg-light;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
 
   &__icon {
     font-size: 36px;
