@@ -212,8 +212,8 @@ onMounted(() => { loading.value = false })
                 <small>г. Саяногорск, Ленинградский микрорайон, 26/1 н</small>
               </span>
             </label>
-            <label class="delivery-method__option" :class="{ 'delivery-method__option--active': deliveryMethod === 'delivery' }">
-              <input type="radio" v-model="deliveryMethod" value="delivery" />
+            <label class="delivery-method__option delivery-method__option--disabled">
+              <input type="radio" value="delivery" disabled />
               <span class="delivery-method__icon">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M1 4H10V11H1V4Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
@@ -224,8 +224,9 @@ onMounted(() => { loading.value = false })
               </span>
               <span class="delivery-method__text">
                 <strong>Доставка по городу</strong>
-                <small>{{ subtotal >= freeDeliveryThreshold ? 'Бесплатно' : `${deliveryCost} ₽` }} · г. Саяногорск</small>
+                <small>г. Саяногорск</small>
               </span>
+              <span class="delivery-method__soon">Скоро станет доступно</span>
             </label>
 
             <div v-if="deliveryMethod === 'delivery'" class="delivery-address">
@@ -697,7 +698,14 @@ onMounted(() => { loading.value = false })
       background: $color-primary-light;
     }
 
-    &:hover:not(&--active) { border-color: $color-border; }
+    &:hover:not(&--active):not(&--disabled) { border-color: $color-border; }
+
+    &--disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      position: relative;
+      overflow: hidden;
+    }
   }
 
   &__icon {
@@ -714,6 +722,20 @@ onMounted(() => { loading.value = false })
     gap: 2px;
     strong { font-size: $font-base; color: $color-dark; font-weight: 600; }
     small  { font-size: $font-xs; color: $color-text-muted; }
+  }
+
+  &__soon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: $color-text-muted;
+    background: $color-bg-light;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    padding: 2px 6px;
+    white-space: nowrap;
   }
 }
 

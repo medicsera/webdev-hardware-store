@@ -7,7 +7,8 @@
       <h1 class="info-page__title">Способы оплаты</h1>
 
       <div class="info-page__grid">
-        <div class="info-card">
+        <div class="info-card info-card--disabled">
+          <div class="info-card__badge">Скоро станет доступно</div>
           <div class="info-card__icon">💳</div>
           <h2 class="info-card__title">Банковская карта</h2>
           <p class="info-card__text">
@@ -25,7 +26,8 @@
           </p>
         </div>
 
-        <div class="info-card">
+        <div class="info-card info-card--disabled">
+          <div class="info-card__badge">Скоро станет доступно</div>
           <div class="info-card__icon">📱</div>
           <h2 class="info-card__title">СБП (Система быстрых платежей)</h2>
           <p class="info-card__text">
@@ -34,7 +36,8 @@
           </p>
         </div>
 
-        <div class="info-card">
+        <div class="info-card info-card--disabled">
+          <div class="info-card__badge">Скоро станет доступно</div>
           <div class="info-card__icon">🧾</div>
           <h2 class="info-card__title">Безналичный расчёт для юр. лиц</h2>
           <p class="info-card__text">
@@ -114,8 +117,29 @@
   @include card;
   padding: $gap-lg;
   transition: box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
 
   &:hover { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
+
+  &--disabled {
+    opacity: 0.55;
+    &:hover { box-shadow: none; }
+  }
+
+  &__badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-muted;
+    background: $color-bg-light;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
 
   &__icon {
     font-size: 36px;
