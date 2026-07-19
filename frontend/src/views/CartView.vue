@@ -309,6 +309,8 @@ onMounted(() => { loading.value = false })
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   padding: 16px 36px 16px 16px;
 
+  @include below-sm { width: calc(100vw - 32px); top: 12px; padding: 12px 32px 12px 12px; }
+
   &__close {
     position: absolute;
     top: 8px;
@@ -318,7 +320,7 @@ onMounted(() => { loading.value = false })
     font-size: $font-sm;
     color: #1a6e29;
     cursor: pointer;
-    padding: 2px;
+    padding: 6px;
     opacity: 0.5;
     transition: opacity 0.15s;
     line-height: 1;
@@ -464,10 +466,19 @@ onMounted(() => { loading.value = false })
   @include below-sm {
     flex-wrap: wrap;
     gap: $gap-sm;
+
+    .cart-item__price { display: none; }
+
+    .cart-item__quantity { order: 3; }
+    .cart-item__subtotal { order: 4; min-width: auto; }
+    .cart-item__remove { order: 5; }
   }
 
   &__image-link { display: block; flex-shrink: 0; text-decoration: none; }
-  &__image { width: 80px; height: 80px; object-fit: cover; border-radius: $radius-sm; }
+  &__image {
+    width: 80px; height: 80px; object-fit: cover; border-radius: $radius-sm;
+    @include below-sm { width: 64px; height: 64px; }
+  }
 
   &__info {
     flex: 1;
@@ -531,8 +542,8 @@ onMounted(() => { loading.value = false })
 }
 
 .quantity-btn {
-  width: 24px;
-  height: 26px;
+  width: 28px;
+  height: 32px;
   border: none;
   background: #fff;
   border-radius: $radius-sm;

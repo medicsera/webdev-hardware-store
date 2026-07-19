@@ -246,7 +246,7 @@ const handleAddToCart = () => {
       @include skeleton;
       border-radius: $radius-md;
     }
-    .product-image--skeleton { width: 520px; height: 380px; flex-shrink: 0; }
+    .product-image--skeleton { width: 520px; max-width: 100%; height: 380px; flex-shrink: 0; }
     .product-specs--skeleton { flex: 1; height: 120px; }
     .product-buy--skeleton   { width: 260px; height: 140px; }
 
@@ -313,6 +313,13 @@ const handleAddToCart = () => {
   &--left  { left: 10px; }
   &--right { right: 10px; }
   &:hover  { background: rgba(0, 0, 0, 0.7); }
+
+  @include below-md {
+    opacity: 0.8;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
 }
 
 .gallery-dots {
@@ -334,6 +341,13 @@ const handleAddToCart = () => {
   transition: background 0.2s, transform 0.2s;
   &--active { background: #fff; transform: scale(1.25); }
   &:hover   { background: rgba(255, 255, 255, 0.85); }
+
+  @include below-md {
+    width: 10px;
+    height: 10px;
+    padding: 8px;
+    background-clip: content-box;
+  }
 }
 
 .product-thumbnails {
@@ -446,8 +460,8 @@ const handleAddToCart = () => {
 }
 
 .quantity-btn {
-  width: 24px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: #fff;
   border-radius: $radius-sm;
@@ -500,6 +514,7 @@ const handleAddToCart = () => {
     min-height: 200px;
     line-height: 1.6;
     white-space: pre-wrap;
+    @include below-sm { min-height: 100px; }
   }
 }
 </style>

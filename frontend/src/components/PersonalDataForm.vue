@@ -271,7 +271,7 @@ const startEditPassword = () => {
 }
 
 .change-btn {
-  padding: 4px 14px;
+  padding: 6px 14px;
   background: none;
   border: 1px solid $color-primary;
   border-radius: $radius-sm;

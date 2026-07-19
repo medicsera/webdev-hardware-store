@@ -139,6 +139,7 @@ const goToSubcategory = (catSlug: string, subSlug: string) => router.push(`/cata
     columns: 2;
     column-gap: 12px;
     flex: 1;
+    @include below-sm { columns: 1; }
     &--empty { columns: 1; }
   }
 }

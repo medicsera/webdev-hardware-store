@@ -71,6 +71,7 @@ onMounted(() => {
   min-height: 400px;
 
   @include below-md { flex-direction: column; }
+  @include below-sm { min-height: auto; }
 }
 
 .profile-sidebar {

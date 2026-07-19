@@ -135,6 +135,7 @@ async function cancelOrder() {
     color: $color-text-faint;
     cursor: pointer;
     line-height: 1;
+    padding: 8px;
     padding: 4px;
     transition: color 0.15s;
     &:hover { color: #333; }

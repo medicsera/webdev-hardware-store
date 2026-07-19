@@ -28,6 +28,7 @@ html, body, #app {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #f5f5f5;
+  overflow-x: hidden;
 }
 
 #app {

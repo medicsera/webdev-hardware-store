@@ -280,7 +280,7 @@ function apiError(e: any): string {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
 
   @include below-xs { width: calc(100vw - 32px); padding: $gap-md; }
-  &--wide { width: 560px; @include below-sm { width: calc(100vw - 32px); } }
+  &--wide { width: 560px; @include below-md { width: calc(100vw - 32px); } }
 }
 
 .modal-title {
@@ -368,8 +368,8 @@ function apiError(e: any): string {
 .char-sep { font-size: $font-md; color: $color-text-muted; flex-shrink: 0; }
 
 .char-delete {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: $radius-full;
   background: #fce;

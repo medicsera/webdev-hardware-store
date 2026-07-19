@@ -88,7 +88,7 @@ const currentYear = computed(() => new Date().getFullYear())
 
   @include below-lg { grid-template-columns: repeat(2, 1fr); gap: 30px; }
   @include below-sm { grid-template-columns: repeat(2, 1fr); gap: $gap-md; }
-  @include below-xs { grid-template-columns: repeat(2, 1fr); gap: $gap-sm; }
+  @include below-xs { grid-template-columns: 1fr; gap: $gap-lg; }
 }
 
 .footer-column {

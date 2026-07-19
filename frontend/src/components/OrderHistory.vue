@@ -327,7 +327,7 @@ onUnmounted(() => {
 
   &__details {
     width: 100%;
-    padding: 5px 0;
+    padding: 8px 0;
     background: none;
     border: 1px solid $color-border;
     border-radius: $radius-sm;
