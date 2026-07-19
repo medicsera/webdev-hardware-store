@@ -182,6 +182,16 @@ class AdminController(
         return toAdminDto(orderRepository.save(order))
     }
 
+    @Transactional
+    @DeleteMapping("/orders/{id}")
+    fun deleteOrder(@PathVariable id: Long): ResponseEntity<Void> {
+        val order = orderRepository.findByIdWithUser(id).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Заказ не найден")
+        }
+        orderRepository.delete(order)
+        return ResponseEntity.noContent().build()
+    }
+
     private fun toAdminDto(order: com.example.webdev_hardware_store.model.Order) = AdminOrderDto(
         id              = order.id,
         total           = order.total.toDouble(),

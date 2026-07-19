@@ -125,6 +125,20 @@ function toggleExpand(id: number) {
   else expandedOrders.value.add(id)
 }
 
+async function deleteOrder(order: AdminOrder) {
+  if (!confirm(`Удалить заказ #${order.id}? Это действие необратимо.`)) return
+  try {
+    await api.delete(`/admin/orders/${order.id}`)
+    orders.value = orders.value.filter(o => o.id !== order.id)
+  } catch (e) {
+    alert('Ошибка удаления заказа')
+  }
+}
+
+function goToProduct(productId: number) {
+  router.push(`/product/${productId}`)
+}
+
 function toggleDay(day: string) {
   if (collapsedDays.value.has(day)) collapsedDays.value.delete(day)
   else collapsedDays.value.add(day)
@@ -556,7 +570,7 @@ async function removeProduct(id: number) {
                   <div v-for="item in order.items" :key="item.id" class="order-item">
                     <img v-if="item.imageUrl" :src="item.imageUrl" class="order-item__img" alt="" />
                     <div v-else class="order-item__img order-item__img--placeholder"></div>
-                    <span class="order-item__name">{{ item.name }}</span>
+                    <a class="order-item__name order-item__name--link" @click.stop="goToProduct(item.productId)">{{ item.name }}</a>
                     <span class="order-item__qty">{{ item.quantity }} шт.</span>
                     <span class="order-item__price">{{ formatOrderPrice(item.price) }}</span>
                     <span class="order-item__subtotal">{{ formatOrderPrice(item.price * item.quantity) }}</span>
@@ -576,6 +590,7 @@ async function removeProduct(id: number) {
                       {{ order.deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка' }}: {{ formatOrderPrice(order.deliveryCost) }}
                     </span>
                     <span class="order-footer__total">Итого: {{ formatOrderPrice(order.total) }}</span>
+                    <button class="order-footer__delete" @click.stop="deleteOrder(order)">Удалить заказ</button>
                   </div>
                 </div>
               </div>
@@ -1615,6 +1630,14 @@ select.form-input { height: 32px; }
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    &--link {
+      color: $color-primary-dark;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      &:hover { color: $color-primary; text-decoration: underline; }
+    }
   }
 
   &__qty {
@@ -1665,6 +1688,21 @@ select.form-input { height: 32px; }
 .order-footer__total {
   font-weight: 700;
   color: $color-dark;
+}
+
+.order-footer__delete {
+  margin-left: auto;
+  padding: 4px 12px;
+  background: none;
+  border: 1px solid $color-danger;
+  border-radius: $radius-sm;
+  color: $color-danger;
+  font-size: $font-sm;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: $color-danger; color: #fff; }
 }
 
 .orders-pagination {
