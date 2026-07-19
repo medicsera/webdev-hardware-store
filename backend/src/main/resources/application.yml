@@ -31,15 +31,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
-  mail:
-    host: ${MAIL_HOST:smtp.yandex.ru}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USER:}
-    password: ${MAIL_PASS:}
-    from: ${MAIL_FROM:}
-    properties:
-      mail.smtp.starttls.enable: true
-      mail.smtp.auth: true
+unisender:
+  api-key: ${UNISENDER_API_KEY:}
+  sender-name: ${UNISENDER_SENDER_NAME:Factura}
+  sender-email: ${UNISENDER_SENDER_EMAIL:}
+  list-id: ${UNISENDER_LIST_ID:1}
 
 app:
   upload-dir: ${APP_UPLOAD_DIR:./uploads}
