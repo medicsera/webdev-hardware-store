@@ -99,14 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
         password: string
     ): Promise<{ success: boolean; error?: string }> {
         try {
-            const resp = await api.post('/auth/register', { username: email, password, firstName, lastName, phone })
-            const token = resp.data.token
-            localStorage.setItem(TOKEN_KEY, token)
-            setUserFromToken(token)
-            if (currentUser.value?.id) {
-                useCartStore().initForUser(String(currentUser.value.id))
-            }
-            await fetchProfile()
+            await api.post('/auth/register', { username: email, password, firstName, lastName, phone })
             return { success: true }
         } catch (err: any) {
             const msg = err?.response?.data?.message ?? 'Ошибка регистрации'

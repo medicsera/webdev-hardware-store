@@ -108,11 +108,12 @@ class AuthController(
             firstName = req.firstName,
             lastName = req.lastName,
             phone = req.phone,
+            verified = false,
         )
         val saved = userRepository.save(buyer)
         rateLimiter.recordRegister(ip)
-        val token = jwtUtil.generateToken(saved.id, saved.username, saved.role)
-        return ResponseEntity.ok(AuthResponse(token))
+        sendCode(saved.username)
+        return ResponseEntity.ok(MessageResponse("Код подтверждения отправлен на ${saved.username}"))
     }
 
     @Operation(summary = "Подтвердить email кодом из письма")
@@ -160,7 +161,7 @@ class AuthController(
         try {
             emailService.sendVerificationCode(email, code)
         } catch (e: Exception) {
-            // письмо не отправилось — пользователь может запросить повторно
+            e.printStackTrace()
         }
     }
 

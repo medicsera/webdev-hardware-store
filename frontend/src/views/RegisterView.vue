@@ -42,7 +42,7 @@ const handleSubmit = async () => {
   isLoading.value = false
 
   if (result.success) {
-    router.push('/')
+    router.push(`/verify?email=${encodeURIComponent(email.value.trim())}`)
   } else if (result.error) {
     error.value = result.error
   }
