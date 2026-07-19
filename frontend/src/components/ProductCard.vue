@@ -277,6 +277,11 @@ const decrement = () => {
     display: flex;
     gap: 12px;
     margin-top: 12px;
+
+    @include below-sm {
+      flex-direction: column;
+      gap: 10px;
+    }
   }
 }
 
@@ -285,7 +290,7 @@ const decrement = () => {
   padding: 12px $gap-md;
   background: $color-primary;
 
-  @include below-sm { padding: 8px $gap-sm; font-size: $font-sm; }
+  @include below-sm { padding: 12px; font-size: $font-md; }
   color: $color-dark;
   border: none;
   border-radius: $radius-md;
@@ -305,11 +310,13 @@ const decrement = () => {
   background: $color-bg-light;
   padding: $gap-sm;
   border-radius: $radius-md;
+
+  @include below-sm { justify-content: center; }
 }
 
 .quantity-btn {
-  width: 20px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: #fff;
   border-radius: $radius-sm;
