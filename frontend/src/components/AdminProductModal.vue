@@ -84,6 +84,20 @@ function removeNewImage(i: number) {
   selectedFiles.value.splice(i, 1)
 }
 
+function onPaste(e: ClipboardEvent) {
+  const items = e.clipboardData?.items
+  if (!items) return
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) {
+        selectedFiles.value.push(file)
+        newPreviewUrls.value.push(URL.createObjectURL(file))
+      }
+    }
+  }
+}
+
 async function removeExistingImage(imageUrl: string) {
   if (!productForm.value.id) return
   removingImgUrl.value = imageUrl
@@ -211,8 +225,8 @@ function apiError(e: any): string {
       </div>
 
       <!-- Image upload -->
-      <div class="image-upload-section">
-        <p class="image-upload-label">Фотографии товара:</p>
+      <div class="image-upload-section" @paste="onPaste">
+        <p class="image-upload-label">Фотографии товара: <span class="paste-hint">Ctrl+V для вставки</span></p>
         <div class="image-grid" v-if="productForm.imageUrls.length || newPreviewUrls.length">
           <div v-for="url in productForm.imageUrls" :key="url" class="image-thumb">
             <img :src="url" alt="" />
@@ -427,6 +441,12 @@ select.form-input { height: 32px; }
 }
 
 .image-upload-label { font-size: $font-base; color: #333; margin-bottom: $gap-sm; }
+
+.paste-hint {
+  font-size: $font-xs;
+  color: $color-text-muted;
+  font-weight: 400;
+}
 
 .image-grid {
   display: flex;

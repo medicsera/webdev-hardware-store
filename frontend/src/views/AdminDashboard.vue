@@ -309,7 +309,20 @@ function onCatalogImgSelected(e: Event) {
   if (!input.files?.[0]) return
   catalogModalImgFile.value    = input.files[0]
   catalogModalImgPreview.value = URL.createObjectURL(input.files[0])
-  input.value = ''
+}
+
+function onCatalogImgPaste(e: ClipboardEvent) {
+  const items = e.clipboardData?.items
+  if (!items) return
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) {
+        catalogModalImgFile.value    = file
+        catalogModalImgPreview.value = URL.createObjectURL(file)
+      }
+    }
+  }
 }
 
 function removeCatalogImg() {
@@ -753,8 +766,8 @@ async function removeProduct(id: number) {
           <span class="form-label">Название:</span>
           <input v-model="catalogModalName" class="form-input" :disabled="savingCatalog" @keyup.enter="saveCatalogModal" />
         </label>
-        <div class="modal-image-section">
-          <p class="modal-image-label">Фото категории:</p>
+        <div class="modal-image-section" @paste="onCatalogImgPaste">
+          <p class="modal-image-label">Фото категории: <span style="font-size:11px;color:#999;font-weight:400">Ctrl+V</span></p>
           <div v-if="catalogModalImgPreview" class="modal-image-preview">
             <img :src="catalogModalImgPreview" alt="" />
             <button class="modal-image-remove" :disabled="savingCatalog" @click="removeCatalogImg">&#10005;</button>
