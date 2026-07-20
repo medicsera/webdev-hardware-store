@@ -52,8 +52,16 @@ const showPassword = ref(false)
 
   &__input {
     width: 100%;
-    padding-right: 42px;
+    padding: 10px 42px 10px 14px;
+    border: 1px solid $color-border;
+    border-radius: $radius-pill;
+    font-size: $font-md;
+    background: #fff;
+    transition: border-color 0.2s;
     box-sizing: border-box;
+    &:focus { outline: none; border-color: $color-primary; }
+    &::placeholder { color: $color-text-faint; }
+    &:disabled { background: $color-bg; color: $color-text-secondary; cursor: default; }
   }
 
   &__toggle {
