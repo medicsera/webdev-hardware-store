@@ -56,7 +56,7 @@
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
-@mixin input {
+@mixin input-field {
   padding: 10px 14px;
   border: 1px solid $color-border;
   border-radius: $radius-pill;
