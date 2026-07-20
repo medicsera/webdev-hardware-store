@@ -115,6 +115,7 @@ const goToLogin = () => {
             v-model="password"
             placeholder="Введите пароль"
             autocomplete="new-password"
+            input-class="form-group__input"
           />
         </div>
 

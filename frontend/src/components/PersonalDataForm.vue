@@ -195,6 +195,7 @@ const startEditPassword = () => {
       <PasswordInput
         id="password"
         v-model="form.password"
+        input-class="form-group__input"
         :disabled="!editingPassword"
       />
       <button

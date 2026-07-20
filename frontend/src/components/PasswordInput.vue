@@ -6,6 +6,8 @@ const props = defineProps<{
   placeholder?: string
   autocomplete?: string
   id?: string
+  inputClass?: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -23,9 +25,11 @@ const inputType = () => showPassword.value ? 'text' : 'password'
       :id="id"
       :type="inputType()"
       class="password-field__input"
+      :class="inputClass"
       :value="modelValue"
       :placeholder="placeholder"
       :autocomplete="autocomplete"
+      :disabled="disabled"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <button
@@ -49,23 +53,17 @@ const inputType = () => showPassword.value ? 'text' : 'password'
 <style lang="scss" scoped>
 .password-field {
   position: relative;
+  width: 100%;
 
   &__input {
     width: 100%;
-    padding: 10px 42px 10px 14px;
-    border: 1px solid #ccc;
-    border-radius: $radius-pill;
-    font-size: $font-md;
-    background: #fff;
-    transition: border-color 0.2s;
+    padding-right: 42px;
     box-sizing: border-box;
-    &:focus { outline: none; border-color: $color-primary; }
-    &::placeholder { color: $color-text-faint; }
   }
 
   &__toggle {
     position: absolute;
-    right: 10px;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
     background: none;

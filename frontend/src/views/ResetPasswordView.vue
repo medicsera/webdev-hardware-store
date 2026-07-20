@@ -66,6 +66,7 @@ const handleReset = async () => {
             v-model="newPassword"
             placeholder="Минимум 6 символов"
             autocomplete="new-password"
+            input-class="form-group__input"
           />
         </div>
 
@@ -76,6 +77,7 @@ const handleReset = async () => {
             v-model="confirmPassword"
             placeholder="Повторите пароль"
             autocomplete="new-password"
+            input-class="form-group__input"
           />
         </div>
 

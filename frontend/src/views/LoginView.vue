@@ -72,6 +72,7 @@ const goToRegister = () => {
             v-model="password"
             placeholder="Введите пароль"
             autocomplete="current-password"
+            input-class="form-group__input"
           />
           <router-link to="/forgot-password" class="forgot-link">Забыли пароль?</router-link>
         </div>
