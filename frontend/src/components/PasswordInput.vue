@@ -62,6 +62,7 @@ const showPassword = ref(false)
     &:focus { outline: none; border-color: $color-primary; }
     &::placeholder { color: $color-text-faint; }
     &:disabled { background: $color-bg; color: $color-text-secondary; cursor: default; }
+    @include input-field;
   }
 
   &__toggle {

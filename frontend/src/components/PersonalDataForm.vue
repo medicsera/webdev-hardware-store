@@ -195,7 +195,6 @@ const startEditPassword = () => {
       <PasswordInput
         id="password"
         v-model="form.password"
-        input-class="form-group__input"
         :disabled="!editingPassword"
       />
       <button
@@ -258,6 +257,12 @@ const startEditPassword = () => {
 
     @include below-xs { max-width: 100%; width: 100%; }
   }
+}
+
+:deep(.password-field) {
+  flex: 1;
+  max-width: 220px;
+  @include below-xs { max-width: 100%; width: 100%; }
 }
 
 .change-btn {
