@@ -171,7 +171,7 @@ const handleReset = async () => {
   flex-direction: column;
   gap: 6px;
   &__label { font-size: $font-base; color: $color-text; font-weight: 500; }
-  &__input { @include input; }
+  &__input { @include input-field; }
 }
   }
 }

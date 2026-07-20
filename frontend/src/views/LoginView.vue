@@ -167,7 +167,7 @@ const goToRegister = () => {
 
   &__label { font-size: $font-base; color: $color-text; font-weight: 500; }
 
-  &__input { @include input; }
+  &__input { @include input-field; }
 }
 
 .form-error {
