@@ -1,35 +1,39 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: string
   placeholder?: string
   autocomplete?: string
   id?: string
   inputClass?: string
   disabled?: boolean
-}>()
+}>(), {
+  placeholder: '',
+  autocomplete: '',
+  id: '',
+  inputClass: '',
+  disabled: false,
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
 const showPassword = ref(false)
-
-const inputType = () => showPassword.value ? 'text' : 'password'
 </script>
 
 <template>
   <div class="password-field">
     <input
-      :id="id"
-      :type="inputType()"
+      :id="props.id"
+      :type="showPassword ? 'text' : 'password'"
       class="password-field__input"
-      :class="inputClass"
-      :value="modelValue"
-      :placeholder="placeholder"
-      :autocomplete="autocomplete"
-      :disabled="disabled"
+      :class="props.inputClass"
+      :value="props.modelValue"
+      :placeholder="props.placeholder"
+      :autocomplete="props.autocomplete"
+      :disabled="props.disabled"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <button
