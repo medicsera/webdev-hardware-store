@@ -143,6 +143,12 @@ export const useAuthStore = defineStore('auth', () => {
         clearToken()
     }
 
+    async function updateProfile(data: { firstName?: string; lastName?: string; phone?: string; address?: string; email?: string; password?: string }) {
+        if (!currentUser.value) return
+        await api.put('/buyer/profile', data)
+        await fetchProfile()
+    }
+
     async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
         try {
             await api.post('/auth/forgot-password', { email })
