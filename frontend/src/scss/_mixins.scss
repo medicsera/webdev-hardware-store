@@ -1,5 +1,3 @@
-@use "variables" as *;
-
 // ─── Mobile-first (min-width) ────────────────────────────────────
 @mixin xs { @media (min-width: $bp-xs) { @content; } }
 @mixin sm { @media (min-width: $bp-sm) { @content; } }
