@@ -308,15 +308,15 @@ const decrement = () => {
   display: flex;
   align-items: center;
   background: $color-bg-light;
-  padding: $gap-sm;
+  padding: 4px;
   border-radius: $radius-md;
 
   @include below-sm { justify-content: center; }
 }
 
 .quantity-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: #fff;
   border-radius: $radius-sm;
@@ -333,7 +333,7 @@ const decrement = () => {
 
 .quantity-input {
   font-weight: 500;
-  width: 44px;
+  width: 36px;
   text-align: center;
   border: none;
   background: transparent;
