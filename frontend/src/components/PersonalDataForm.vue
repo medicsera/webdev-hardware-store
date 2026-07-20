@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import type { ProfileData } from '@/types/profile'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const authStore = useAuthStore()
 
@@ -191,12 +192,9 @@ const startEditPassword = () => {
 
     <div class="form-group">
       <label class="form-group__label" for="password">Пароль:</label>
-      <input
+      <PasswordInput
         id="password"
-        ref="passwordInput"
         v-model="form.password"
-        type="password"
-        class="form-group__input"
         :disabled="!editingPassword"
       />
       <button

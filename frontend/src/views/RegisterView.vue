@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -109,11 +110,9 @@ const goToLogin = () => {
 
         <div class="form-group">
           <label class="form-group__label" for="password">Пароль</label>
-          <input
+          <PasswordInput
             id="password"
             v-model="password"
-            type="password"
-            class="form-group__input"
             placeholder="Введите пароль"
             autocomplete="new-password"
           />

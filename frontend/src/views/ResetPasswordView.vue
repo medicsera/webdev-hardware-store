@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -60,11 +61,9 @@ const handleReset = async () => {
 
         <div class="form-group">
           <label class="form-group__label" for="newPassword">Новый пароль</label>
-          <input
+          <PasswordInput
             id="newPassword"
             v-model="newPassword"
-            type="password"
-            class="form-group__input"
             placeholder="Минимум 6 символов"
             autocomplete="new-password"
           />
@@ -72,11 +71,9 @@ const handleReset = async () => {
 
         <div class="form-group">
           <label class="form-group__label" for="confirmPassword">Повторите пароль</label>
-          <input
+          <PasswordInput
             id="confirmPassword"
             v-model="confirmPassword"
-            type="password"
-            class="form-group__input"
             placeholder="Повторите пароль"
             autocomplete="new-password"
           />
