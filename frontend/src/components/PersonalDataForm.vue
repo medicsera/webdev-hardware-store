@@ -254,7 +254,7 @@ const startEditPassword = () => {
   &__input {
     flex: 1;
     max-width: 220px;
-    @include input;
+    @include input-field;
 
     @include below-xs { max-width: 100%; width: 100%; }
   }
