@@ -45,6 +45,12 @@ data class ResendRequest(
     @field:NotBlank @field:Email val email: String,
 )
 
+data class ResetPasswordRequest(
+    @field:NotBlank @field:Email val email: String,
+    @field:NotBlank val code: String,
+    @field:NotBlank @field:Size(min = 6, max = 100) val newPassword: String,
+)
+
 data class AuthResponse(val token: String)
 data class MessageResponse(val message: String)
 data class ErrorResponse(val message: String)
@@ -155,6 +161,37 @@ class AuthController(
 
         sendCode(req.email)
         return ResponseEntity.ok(MessageResponse("Код отправлен на ${req.email}"))
+    }
+
+    @Operation(summary = "Забыли пароль — отправить код на почту")
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@Valid @RequestBody req: ResendRequest): ResponseEntity<*> {
+        val user = userRepository.findByUsername(req.email)
+            ?: return ResponseEntity.badRequest().body(ErrorResponse("Пользователь с такой почтой не найден"))
+
+        sendCode(req.email)
+        return ResponseEntity.ok(MessageResponse("Код для сброса пароля отправлен на ${req.email}"))
+    }
+
+    @Operation(summary = "Сбросить пароль по коду")
+    @PostMapping("/reset-password")
+    fun resetPassword(@Valid @RequestBody req: ResetPasswordRequest): ResponseEntity<*> {
+        val verification = emailVerificationRepository.findByEmailAndCode(req.email, req.code)
+            ?: return ResponseEntity.badRequest().body(ErrorResponse("Неверный код"))
+
+        if (verification.expiresAt.isBefore(LocalDateTime.now())) {
+            emailVerificationRepository.delete(verification)
+            return ResponseEntity.badRequest().body(ErrorResponse("Код истёк. Запросите новый"))
+        }
+
+        val user = userRepository.findByUsername(req.email)
+            ?: return ResponseEntity.badRequest().body(ErrorResponse("Пользователь не найден"))
+
+        user.password = passwordEncoder.encode(req.newPassword)!!
+        userRepository.save(user)
+        emailVerificationRepository.deleteByEmail(req.email)
+
+        return ResponseEntity.ok(MessageResponse("Пароль успешно изменён"))
     }
 
     private fun sendCode(email: String) {

@@ -143,11 +143,25 @@ export const useAuthStore = defineStore('auth', () => {
         clearToken()
     }
 
-    async function updateProfile(data: { firstName?: string; lastName?: string; phone?: string; address?: string; email?: string; password?: string }) {
-        if (!currentUser.value) return
-        await api.put('/buyer/profile', data)
-        await fetchProfile()
+    async function forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            await api.post('/auth/forgot-password', { email })
+            return { success: true }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message ?? 'Ошибка отправки'
+            return { success: false, error: msg }
+        }
     }
 
-    return { currentUser, isAuthenticated, login, register, verifyEmail, resendCode, logout, updateProfile }
+    async function resetPassword(email: string, code: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            await api.post('/auth/reset-password', { email, code, newPassword })
+            return { success: true }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message ?? 'Ошибка сброса пароля'
+            return { success: false, error: msg }
+        }
+    }
+
+    return { currentUser, isAuthenticated, login, register, verifyEmail, resendCode, logout, updateProfile, forgotPassword, resetPassword }
 })

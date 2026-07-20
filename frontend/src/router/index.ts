@@ -72,6 +72,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: "Подтверждение email" }
     },
     {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () => import('@/views/ForgotPasswordView.vue'),
+        meta: { title: "Забыли пароль" }
+    },
+    {
+        path: '/reset-password',
+        name: 'reset-password',
+        component: () => import('@/views/ResetPasswordView.vue'),
+        meta: { title: "Новый пароль" }
+    },
+    {
         path: '/profile',
         name: 'profile',
         component: () => import('@/views/ProfileView.vue'),

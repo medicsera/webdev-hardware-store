@@ -1,55 +1,42 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const route  = useRoute()
 const authStore = useAuthStore()
 
 const email = ref('')
-const password = ref('')
 const isLoading = ref(false)
 const error = ref('')
+const success = ref(false)
 
 const handleSubmit = async () => {
   error.value = ''
-
-  if (!email.value.trim()) {
-    error.value = 'Введите почту'
-    return
-  }
-
-  if (!password.value) {
-    error.value = 'Введите пароль'
-    return
-  }
+  if (!email.value.trim()) { error.value = 'Введите почту'; return }
 
   isLoading.value = true
-
-  const result = await authStore.login(email.value.trim(), password.value)
-
+  const result = await authStore.forgotPassword(email.value.trim())
   isLoading.value = false
 
   if (result.success) {
-    const redirect = route.query.redirect
-    router.push(typeof redirect === 'string' ? redirect : '/')
-  } else if (result.needsVerification) {
-    router.push(`/verify?email=${encodeURIComponent(email.value.trim())}`)
+    success.value = true
+    setTimeout(() => {
+      router.push(`/reset-password?email=${encodeURIComponent(email.value.trim())}`)
+    }, 1500)
   } else if (result.error) {
     error.value = result.error
   }
-}
-
-const goToRegister = () => {
-  router.push('/register')
 }
 </script>
 
 <template>
   <main class="auth-page">
     <div class="auth-card">
-      <h1 class="auth-card__title">Вход</h1>
+      <h1 class="auth-card__title">Забыли пароль?</h1>
+      <p class="auth-card__subtitle">
+        Укажите почту, и мы отправим код для сброса пароля.
+      </p>
 
       <form class="auth-card__form" @submit.prevent="handleSubmit">
         <div class="form-group">
@@ -64,36 +51,17 @@ const goToRegister = () => {
           />
         </div>
 
-        <div class="form-group">
-          <label class="form-group__label" for="password">Пароль</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            class="form-group__input"
-            placeholder="Введите пароль"
-            autocomplete="current-password"
-          />
-          <router-link to="/forgot-password" class="forgot-link">Забыли пароль?</router-link>
-        </div>
-
         <div v-if="error" class="form-error">{{ error }}</div>
+        <div v-if="success" class="form-success">Код отправлен! Перенаправление...</div>
 
-        <button
-          type="submit"
-          class="auth-card__submit"
-          :disabled="isLoading"
-        >
-          <span v-if="isLoading">Вход...</span>
-          <span v-else>Войти</span>
+        <button type="submit" class="auth-card__submit" :disabled="isLoading || success">
+          <span v-if="isLoading">Отправка...</span>
+          <span v-else>Отправить код</span>
         </button>
       </form>
 
       <p class="auth-card__footer">
-        Нет аккаунта?
-        <a href="#" class="auth-card__link" @click.prevent="goToRegister">
-          Зарегистрируйтесь
-        </a>
+        <a href="#" class="auth-card__link" @click.prevent="$router.push('/login')">Вернуться ко входу</a>
       </p>
     </div>
   </main>
@@ -118,6 +86,7 @@ const goToRegister = () => {
   padding: 32px;
   width: 100%;
   max-width: 400px;
+  text-align: center;
 
   @include below-xs { padding: $gap-lg $gap-md; }
 
@@ -125,11 +94,17 @@ const goToRegister = () => {
     font-size: $font-2xl;
     font-weight: 700;
     color: $color-success;
-    margin: 0 0 $gap-lg;
-    text-align: center;
+    margin: 0 0 $gap-sm;
   }
 
-  &__form { display: flex; flex-direction: column; gap: $gap-md; }
+  &__subtitle {
+    font-size: $font-base;
+    color: $color-text-secondary;
+    margin: 0 0 $gap-lg;
+    line-height: 1.5;
+  }
+
+  &__form { display: flex; flex-direction: column; gap: $gap-md; text-align: left; }
 
   &__submit {
     padding: 12px $gap-lg;
@@ -164,9 +139,7 @@ const goToRegister = () => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-
   &__label { font-size: $font-base; color: $color-text; font-weight: 500; }
-
   &__input {
     padding: 10px 14px;
     border: 1px solid #ccc;
@@ -188,13 +161,12 @@ const goToRegister = () => {
   color: $color-danger;
 }
 
-.forgot-link {
-  display: block;
-  text-align: right;
-  font-size: $font-sm;
+.form-success {
+  background: #e8f5e9;
+  border: 1px solid $color-success;
+  border-radius: $radius-md;
+  padding: 10px 14px;
+  font-size: $font-base;
   color: $color-success;
-  text-decoration: none;
-  margin-top: 4px;
-  &:hover { text-decoration: underline; }
 }
 </style>
