@@ -58,6 +58,18 @@
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
+@mixin input {
+  padding: 10px 14px;
+  border: 1px solid $color-border;
+  border-radius: $radius-pill;
+  font-size: $font-md;
+  background: #fff;
+  transition: border-color 0.2s;
+  &:focus { outline: none; border-color: $color-primary; }
+  &::placeholder { color: $color-text-faint; }
+  &:disabled { background: $color-bg; color: $color-text-secondary; cursor: default; }
+}
+
 @mixin skeleton {
   background: linear-gradient(90deg, $color-bg 25%, $color-border-light 50%, $color-bg 75%);
   background-size: 200% 100%;

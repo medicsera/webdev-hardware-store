@@ -254,18 +254,9 @@ const startEditPassword = () => {
   &__input {
     flex: 1;
     max-width: 220px;
-    height: 28px;
-    padding: 0 10px;
-    border: 1px solid #ccc;
-    border-radius: $radius-sm;
-    font-size: $font-base;
-    background: #fff;
-    transition: border-color 0.2s;
+    @include input;
 
     @include below-xs { max-width: 100%; width: 100%; }
-
-    &:focus { outline: none; border-color: $color-primary; }
-    &:disabled { background: $color-bg; color: $color-text-secondary; cursor: default; }
   }
 }
 

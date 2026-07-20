@@ -171,22 +171,8 @@ const handleReset = async () => {
   flex-direction: column;
   gap: 6px;
   &__label { font-size: $font-base; color: $color-text; font-weight: 500; }
-  &__input {
-    padding: 10px 14px;
-    border: 1px solid #ccc;
-    border-radius: $radius-pill;
-    font-size: $font-md;
-    background: #fff;
-    transition: border-color 0.2s;
-    &:focus { outline: none; border-color: $color-primary; }
-    &::placeholder { color: $color-text-faint; }
-
-    &--code {
-      text-align: center;
-      font-size: $font-2xl;
-      font-weight: 700;
-      letter-spacing: 8px;
-    }
+  &__input { @include input; }
+}
   }
 }
 
